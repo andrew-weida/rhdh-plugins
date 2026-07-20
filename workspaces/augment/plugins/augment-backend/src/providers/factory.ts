@@ -32,6 +32,7 @@ import type {
 } from '@backstage/backend-plugin-api';
 import type { ProviderType } from '@red-hat-developer-hub/backstage-plugin-augment-common';
 import type { AdminConfigService } from '../services/AdminConfigService';
+import type { ElicitationStore } from '../services/ElicitationStore';
 import type { AgenticProvider } from './types';
 import type { AgenticProviderFactory } from '../extensions';
 import { ResponsesApiProvider } from './llamastack';
@@ -49,6 +50,7 @@ export interface CreateProviderOptions {
   database?: DatabaseService;
   adminConfig?: AdminConfigService;
   cache?: CacheService;
+  elicitationStore?: ElicitationStore;
 }
 
 /**
@@ -90,7 +92,8 @@ export function createProvider(
   options: CreateProviderOptions,
   overrideType?: ProviderType,
 ): AgenticProvider {
-  const { logger, config, database, adminConfig, cache } = options;
+  const { logger, config, database, adminConfig, cache, elicitationStore } =
+    options;
 
   const providerType: ProviderType =
     overrideType ??
@@ -105,6 +108,7 @@ export function createProvider(
         config,
         database,
         adminConfig,
+        elicitationStore,
       });
 
     case 'kagenti':

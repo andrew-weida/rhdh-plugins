@@ -74,6 +74,7 @@ export class ResponsesApiProvider implements AgenticProvider {
     config: RootConfigService;
     database?: DatabaseService;
     adminConfig?: AdminConfigService;
+    elicitationStore?: import('../../services/ElicitationStore').ElicitationStore;
   }) {
     this.logger = options.logger;
     this.orchestrator = new ResponsesApiCoordinator(options);
@@ -230,77 +231,82 @@ export class ResponsesApiProvider implements AgenticProvider {
     let streamResponseId: string | undefined;
     let currentAgentName: string | undefined;
 
-    await this.orchestrator.chatStream(
-      request,
-      (rawEventJson: string) => {
-        let parsed: Record<string, unknown> | undefined;
-        try {
-          parsed = JSON.parse(rawEventJson);
-        } catch {
-          /* non-JSON */
-        }
+    this.orchestrator.setBackendToolStreamContext(onEvent);
+    try {
+      await this.orchestrator.chatStream(
+        request,
+        (rawEventJson: string) => {
+          let parsed: Record<string, unknown> | undefined;
+          try {
+            parsed = JSON.parse(rawEventJson);
+          } catch {
+            /* non-JSON */
+          }
 
-        if (parsed?.type === 'stream.agent.handoff') {
-          currentAgentName = parsed.toAgent as string;
-          onEvent({
-            type: 'stream.agent.handoff',
-            fromAgent: parsed.fromAgent as string | undefined,
-            toAgent: currentAgentName,
-            reason: parsed.reason as string | undefined,
-          } as NormalizedStreamEvent);
-          return;
-        }
+          if (parsed?.type === 'stream.agent.handoff') {
+            currentAgentName = parsed.toAgent as string;
+            onEvent({
+              type: 'stream.agent.handoff',
+              fromAgent: parsed.fromAgent as string | undefined,
+              toAgent: currentAgentName,
+              reason: parsed.reason as string | undefined,
+            } as NormalizedStreamEvent);
+            return;
+          }
 
-        if (parsed?.type === '__agent.responding') {
-          currentAgentName = parsed.agentName as string;
-          return;
-        }
+          if (parsed?.type === '__agent.responding') {
+            currentAgentName = parsed.agentName as string;
+            return;
+          }
 
-        if (
-          parsed &&
-          typeof parsed.type === 'string' &&
-          parsed.type.startsWith('stream.')
-        ) {
-          const event = parsed as { type: string } & Record<string, unknown>;
-          if (event.type === 'stream.started' && event.responseId) {
-            streamResponseId = event.responseId as string;
+          if (
+            parsed &&
+            typeof parsed.type === 'string' &&
+            parsed.type.startsWith('stream.')
+          ) {
+            const event = parsed as { type: string } & Record<string, unknown>;
+            if (event.type === 'stream.started' && event.responseId) {
+              streamResponseId = event.responseId as string;
+            }
+            if (event.type === 'stream.completed' && currentAgentName) {
+              event.agentName = currentAgentName;
+            }
+            if (event.type === 'stream.tool.approval') {
+              if (!event.responseId && streamResponseId)
+                event.responseId = streamResponseId;
+              this.logger.info(
+                `[HITL] Emitting stream.tool.approval: callId=${event.callId}, name=${event.name}, serverLabel=${event.serverLabel}, responseId=${event.responseId}`,
+              );
+            }
+            onEvent(event as NormalizedStreamEvent);
+            return;
           }
-          if (event.type === 'stream.completed' && currentAgentName) {
-            event.agentName = currentAgentName;
-          }
-          if (event.type === 'stream.tool.approval') {
-            if (!event.responseId && streamResponseId)
-              event.responseId = streamResponseId;
-            this.logger.info(
-              `[HITL] Emitting stream.tool.approval: callId=${event.callId}, name=${event.name}, serverLabel=${event.serverLabel}, responseId=${event.responseId}`,
-            );
-          }
-          onEvent(event as NormalizedStreamEvent);
-          return;
-        }
 
-        const normalized = normalizeLlamaStackEvent(rawEventJson, type => {
-          this.logger.debug(`[Stream] Unknown event type: ${type}`);
-        });
-        for (const event of normalized) {
-          if (event.type === 'stream.started' && event.responseId) {
-            streamResponseId = event.responseId;
+          const normalized = normalizeLlamaStackEvent(rawEventJson, type => {
+            this.logger.debug(`[Stream] Unknown event type: ${type}`);
+          });
+          for (const event of normalized) {
+            if (event.type === 'stream.started' && event.responseId) {
+              streamResponseId = event.responseId;
+            }
+            if (event.type === 'stream.tool.approval') {
+              if (!event.responseId && streamResponseId)
+                event.responseId = streamResponseId;
+              this.logger.info(
+                `[HITL] Emitting stream.tool.approval: callId=${event.callId}, name=${event.name}, serverLabel=${event.serverLabel}, responseId=${event.responseId}`,
+              );
+            }
+            if (event.type === 'stream.completed' && currentAgentName) {
+              event.agentName = currentAgentName;
+            }
+            onEvent(event);
           }
-          if (event.type === 'stream.tool.approval') {
-            if (!event.responseId && streamResponseId)
-              event.responseId = streamResponseId;
-            this.logger.info(
-              `[HITL] Emitting stream.tool.approval: callId=${event.callId}, name=${event.name}, serverLabel=${event.serverLabel}, responseId=${event.responseId}`,
-            );
-          }
-          if (event.type === 'stream.completed' && currentAgentName) {
-            event.agentName = currentAgentName;
-          }
-          onEvent(event);
-        }
-      },
-      signal,
-    );
+        },
+        signal,
+      );
+    } finally {
+      this.orchestrator.setBackendToolStreamContext(undefined);
+    }
   }
 
   get conversations(): ConversationCapability {

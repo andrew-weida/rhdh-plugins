@@ -241,6 +241,23 @@ export async function chatStreamWithSession(
 }
 
 /**
+/**
+ * Respond to an MCP elicitation request (user-provided form data).
+ */
+export async function respondToElicitation(
+  deps: ChatApiDeps,
+  elicitationId: string,
+  action: 'accept' | 'decline' | 'cancel',
+  content?: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<{ success: boolean }> {
+  return deps.fetchJson(
+    '/chat/elicitation/respond',
+    jsonBody({ elicitationId, action, content }, 'POST', { signal }),
+  );
+}
+
+/**
  * Submit tool approval (continue after approval).
  */
 export async function submitToolApproval(

@@ -57,6 +57,7 @@ import { BackendToolExecutor } from './BackendToolExecutor';
 import type { RuntimeConfigResolver } from '../../services/RuntimeConfigResolver';
 import type { AdminConfigService } from '../../services/AdminConfigService';
 import type { ToolScopeService } from '../../services/toolscope';
+import type { ElicitationStore } from '../../services/ElicitationStore';
 import { toErrorMessage } from '../../services/utils';
 import { resolveCapabilities } from './ServerCapabilities';
 
@@ -89,12 +90,16 @@ export class ResponsesApiCoordinator {
   private initialized = false;
   private vectorStoreReady = false;
 
+  private readonly elicitationStore?: ElicitationStore;
+
   constructor(options: {
     logger: LoggerService;
     config: RootConfigService;
     database?: DatabaseService;
     adminConfig?: AdminConfigService;
+    elicitationStore?: ElicitationStore;
   }) {
+    this.elicitationStore = options.elicitationStore;
     this.logger = options.logger;
     this.database = options.database;
     this.adminConfig = options.adminConfig;
@@ -147,6 +152,15 @@ export class ResponsesApiCoordinator {
     });
   }
 
+  /** Propagate the active SSE emitter to BackendToolExecutor for elicitation forwarding. */
+  setBackendToolStreamContext(
+    onEvent?: (
+      event: import('@red-hat-developer-hub/backstage-plugin-augment-common').NormalizedStreamEvent,
+    ) => void,
+  ): void {
+    this.backendToolExecutor?.setStreamContext(onEvent);
+  }
+
   getClientManager(): ClientManager {
     return this.clientManager;
   }
@@ -182,6 +196,7 @@ export class ResponsesApiCoordinator {
         adminConfig: this.adminConfig,
         vectorStoreFacade: this.vectorStoreFacade,
         conversationFacade: this.conversationFacade,
+        elicitationStore: this.elicitationStore,
       });
 
       const capOverrides = this.configLoader.loadServerCapabilities();

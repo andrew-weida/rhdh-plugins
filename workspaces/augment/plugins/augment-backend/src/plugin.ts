@@ -33,6 +33,7 @@ import {
 } from './providers';
 import { ChatSessionService } from './services/ChatSessionService';
 import { AdminConfigService } from './services/AdminConfigService';
+import { ElicitationStore } from './services/ElicitationStore';
 import { toErrorMessage } from './services/utils';
 
 const SYNC_TASK_TIMEOUT_MINUTES = 30;
@@ -136,6 +137,9 @@ export const augmentPlugin = createBackendPlugin({
         const adminConfig = new AdminConfigService(database, logger);
         await adminConfig.initialize();
 
+        // Shared store for pending MCP elicitation requests (backend ↔ route)
+        const elicitationStore = new ElicitationStore();
+
         // Create the provider factory options (shared across hot-swaps)
         const providerOptions = {
           logger,
@@ -143,6 +147,7 @@ export const augmentPlugin = createBackendPlugin({
           database,
           adminConfig,
           cache,
+          elicitationStore,
         };
 
         // Factory function for creating providers by type
@@ -259,6 +264,7 @@ export const augmentPlugin = createBackendPlugin({
             sessions,
             adminConfig,
             cache,
+            elicitationStore,
           }),
         );
 
@@ -285,6 +291,7 @@ export const augmentPlugin = createBackendPlugin({
           '/chat',
           '/chat/stream',
           '/chat/approve',
+          '/chat/elicitation',
           '/agents',
           '/sync',
           '/safety/status',

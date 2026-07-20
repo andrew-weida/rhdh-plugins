@@ -20,6 +20,8 @@ import type { McpAuthService } from '../../llamastack/McpAuthService';
 import type { MCPServerConfig, ResponsesApiFunctionTool } from '../../../types';
 import { BACKEND_TOOL_DISCOVERY_TTL_MS } from '../../../constants';
 import { toErrorMessage } from '../../../services/utils';
+import type { ElicitationStore } from '../../../services/ElicitationStore';
+import type { NormalizedStreamEvent } from '@red-hat-developer-hub/backstage-plugin-augment-common';
 import {
   processDiscoveryResults,
   collectSucceededServerIds,
@@ -36,9 +38,21 @@ import {
 
 const SEPARATOR = '__';
 
+/**
+ * Mutable slot associated with a single MCP server connection.
+ * Holds the current SSE onEvent emitter so the elicitation handler,
+ * which is registered once at connect time, can reach the active stream.
+ * Safe for sequential use because each MCP connection is request-response.
+ */
+interface ElicitationSlot {
+  onEvent?: (event: NormalizedStreamEvent) => void;
+}
+
 export class BackendToolExecutor {
   private registry = new Map<string, ResolvedTool>();
   private clients = new Map<string, Client>();
+  /** Per-server elicitation slot — set before each tool call, cleared after. */
+  private readonly elicitationSlots = new Map<string, ElicitationSlot>();
   private cachedTools: ResponsesApiFunctionTool[] | null = null;
   private cachedServerKey = '';
   private lastDiscoveryTimestamp = 0;
@@ -50,7 +64,19 @@ export class BackendToolExecutor {
     private readonly mcpAuth: McpAuthService,
     private readonly logger: LoggerService,
     private readonly skipTlsVerify: boolean,
+    private readonly elicitationStore?: ElicitationStore,
   ) {}
+
+  /**
+   * Set the SSE event emitter for the current streaming session.
+   * Call this at the start of chatStream so elicitation events are forwarded
+   * to the frontend. Clear it (pass undefined) when the stream ends.
+   */
+  setStreamContext(onEvent?: (event: NormalizedStreamEvent) => void): void {
+    for (const slot of this.elicitationSlots.values()) {
+      slot.onEvent = onEvent;
+    }
+  }
 
   getDiscoveryGeneration(): number {
     return this.discoveryGeneration;
@@ -104,12 +130,38 @@ export class BackendToolExecutor {
 
     const results = await Promise.allSettled(
       servers.map(async server => {
+        const slot: ElicitationSlot =
+          this.elicitationSlots.get(server.id) ?? {};
+        this.elicitationSlots.set(server.id, slot);
+
+        const onElicitation = this.elicitationStore
+          ? async (
+              elicitationId: string,
+              params: import('../../../services/utils/mcpClient').ElicitFormParams,
+            ) => {
+              const emit = slot.onEvent;
+              if (emit) {
+                emit({
+                  type: 'stream.elicitation.request',
+                  elicitationId,
+                  message: params.message,
+                  requestedSchema: params.requestedSchema,
+                });
+              } else {
+                this.logger.warn(
+                  `[BackendToolExecutor] Elicitation from ${server.id} has no active stream context; cancelling`,
+                );
+              }
+              return this.elicitationStore!.store(elicitationId);
+            }
+          : undefined;
+
         const { client, tools: serverTools } = await connectAndListToolsSafe(
           server,
           this.mcpAuth,
           this.skipTlsVerify,
           this.logger,
-          { skipSsrfCheck: true },
+          { skipSsrfCheck: true, onElicitation },
         );
         return { server, serverTools, client };
       }),
@@ -353,12 +405,34 @@ export class BackendToolExecutor {
       type: 'streamable-http',
       url: tool.serverUrl,
     };
+    const slot: ElicitationSlot =
+      this.elicitationSlots.get(tool.serverId) ?? {};
+    this.elicitationSlots.set(tool.serverId, slot);
+
+    const onElicitation = this.elicitationStore
+      ? async (
+          elicitationId: string,
+          params: import('../../../services/utils/mcpClient').ElicitFormParams,
+        ) => {
+          const emit = slot.onEvent;
+          if (emit) {
+            emit({
+              type: 'stream.elicitation.request',
+              elicitationId,
+              message: params.message,
+              requestedSchema: params.requestedSchema,
+            });
+          }
+          return this.elicitationStore!.store(elicitationId);
+        }
+      : undefined;
+
     const { client } = await connectAndListToolsSafe(
       server,
       this.mcpAuth,
       this.skipTlsVerify,
       this.logger,
-      { skipSsrfCheck: true },
+      { skipSsrfCheck: true, onElicitation },
     );
     if (client) this.clients.set(tool.serverId, client);
     return client;

@@ -28,6 +28,7 @@ import { SseHeartbeat } from './sseRouteHelpers';
 import { sanitizeErrorMessage } from '../services/utils/errorSanitizer';
 import type { FlushableResponse, RouteContext } from './types';
 import type { AdminConfigService } from '../services/AdminConfigService';
+import type { ElicitationStore } from '../services/ElicitationStore';
 import { trySkillChatProxy } from './skillChatProxy';
 
 function getLastUserContent(messages: ChatMessage[]): string {
@@ -437,6 +438,7 @@ async function resolveProvider(
 export function registerChatRoutes(
   ctx: RouteContext,
   adminConfig?: AdminConfigService,
+  elicitationStore?: ElicitationStore,
 ): void {
   const {
     router,
@@ -972,6 +974,71 @@ export function registerChatRoutes(
           pendingApproval: result.pendingApproval,
           handoff: result.handoff,
         });
+      },
+    ),
+  );
+
+  router.post(
+    '/chat/elicitation/respond',
+    withRoute(
+      'POST /chat/elicitation/respond',
+      'Failed to process elicitation response',
+      async (req, res) => {
+        if (!elicitationStore) {
+          res.status(501).json({
+            success: false,
+            error: 'Elicitation is not supported by the current configuration',
+          });
+          return;
+        }
+
+        const { elicitationId, action, content } = req.body as {
+          elicitationId?: string;
+          action?: string;
+          content?: Record<string, unknown>;
+        };
+
+        if (!elicitationId || typeof elicitationId !== 'string') {
+          res
+            .status(400)
+            .json({ success: false, error: 'elicitationId is required' });
+          return;
+        }
+
+        const validActions = ['accept', 'decline', 'cancel'];
+        if (!action || !validActions.includes(action)) {
+          res.status(400).json({
+            success: false,
+            error: `action must be one of: ${validActions.join(', ')}`,
+          });
+          return;
+        }
+
+        const resolved = elicitationStore.resolve(elicitationId, {
+          action: action as 'accept' | 'decline' | 'cancel',
+          content:
+            action === 'accept'
+              ? (content as
+                  | Record<string, string | number | boolean | string[]>
+                  | undefined)
+              : undefined,
+        });
+
+        if (!resolved) {
+          logger.warn(
+            `[Elicitation] No pending elicitation found for id=${elicitationId}`,
+          );
+          res.status(404).json({
+            success: false,
+            error: 'Elicitation request not found or already responded to',
+          });
+          return;
+        }
+
+        logger.info(
+          `[Elicitation] Resolved elicitation id=${elicitationId} action=${action}`,
+        );
+        res.json({ success: true });
       },
     ),
   );

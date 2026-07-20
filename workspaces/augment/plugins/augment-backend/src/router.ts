@@ -48,6 +48,7 @@ import {
 import { toErrorMessage } from './services/utils';
 import { sanitizeErrorMessage } from './services/utils/errorSanitizer';
 import type { AdminConfigService } from './services/AdminConfigService';
+import type { ElicitationStore } from './services/ElicitationStore';
 import { WorkflowConfigService } from './services/WorkflowConfigService';
 import { AgentApprovalWorkflowService } from './services/AgentApprovalWorkflowService';
 import { ResponsesApiProvider } from './providers/llamastack';
@@ -68,6 +69,7 @@ export interface RouterOptions {
   sessions?: ChatSessionService;
   adminConfig: AdminConfigService;
   cache?: CacheService;
+  elicitationStore?: ElicitationStore;
 }
 
 /**
@@ -106,6 +108,7 @@ export async function createRouter({
   sessions,
   adminConfig,
   cache,
+  elicitationStore,
 }: RouterOptions): Promise<express.Router> {
   const router = Router();
   router.use(express.json({ limit: '1mb' }));
@@ -359,9 +362,10 @@ export async function createRouter({
     maxRequests: 30,
   });
   router.post('/chat/approve', mutationLimiter);
+  router.post('/chat/elicitation/respond', mutationLimiter);
 
   // Authenticated routes
-  registerChatRoutes(ctx, adminConfig);
+  registerChatRoutes(ctx, adminConfig, elicitationStore);
   const agentApprovalService = new AgentApprovalWorkflowService(config, logger);
   registerAgentRoutes(ctx, adminConfig, agentApprovalService);
   registerSkillsRoutes(ctx, adminConfig);

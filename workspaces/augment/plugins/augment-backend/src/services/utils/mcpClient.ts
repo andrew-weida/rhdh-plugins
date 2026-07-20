@@ -16,6 +16,8 @@
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import type { ElicitResult } from '../ElicitationStore';
 
 /**
  * Creates a custom fetch function that skips TLS certificate verification.
@@ -43,10 +45,32 @@ export function createTlsSkipFetch(): typeof globalThis.fetch {
   }) as typeof globalThis.fetch;
 }
 
+/** Structured form schema sent by an MCP server in an elicitation request. */
+export interface ElicitFormSchema {
+  type: 'object';
+  properties: Record<string, unknown>;
+  required?: string[];
+}
+
+/** Parameters of a form-mode elicitation request from an MCP server. */
+export interface ElicitFormParams {
+  message: string;
+  requestedSchema: ElicitFormSchema;
+}
+
 export interface McpConnectionOptions {
   headers?: Record<string, string>;
   skipTlsVerify?: boolean;
   clientName?: string;
+  /**
+   * Called when an MCP server sends an elicitation/create request during a tool call.
+   * The implementation should surface a form to the user, await their response, and
+   * resolve with the result. If omitted, all elicitations are gracefully cancelled.
+   */
+  onElicitation?: (
+    elicitationId: string,
+    params: ElicitFormParams,
+  ) => Promise<ElicitResult>;
 }
 
 export interface McpToolInfo {
@@ -78,10 +102,30 @@ export async function connectToMcpServer(
     fetch: opts.skipTlsVerify ? createTlsSkipFetch() : undefined,
   });
 
-  const client = new Client({
-    name: opts.clientName ?? 'augment',
-    version: '1.0.0',
-  });
+  const client = new Client(
+    { name: opts.clientName ?? 'augment', version: '1.0.0' },
+    { capabilities: { elicitation: { form: {} } } },
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client.setRequestHandler(
+    ElicitRequestSchema,
+    async (request): Promise<any> => {
+      const params = request.params;
+      // Only handle form mode; URL mode is not supported yet.
+      if (params.mode === 'url') {
+        return { action: 'cancel' };
+      }
+      if (opts.onElicitation) {
+        const id = globalThis.crypto.randomUUID();
+        return opts.onElicitation(id, {
+          message: params.message,
+          requestedSchema: params.requestedSchema as ElicitFormSchema,
+        });
+      }
+      return { action: 'cancel' };
+    },
+  );
 
   await client.connect(transport);
   const { tools } = await client.listTools();

@@ -42,6 +42,11 @@ export {
   type UseToolApprovalOptions,
   type UseToolApprovalReturn,
 } from './useToolApproval';
+export {
+  useElicitation,
+  type UseElicitationOptions,
+  type UseElicitationReturn,
+} from './useElicitation';
 export { useAdminConfig } from './useAdminConfig';
 export { useChatAgentConfig } from './useChatAgentConfig';
 export { useChatToolConfig } from './useChatToolConfig';

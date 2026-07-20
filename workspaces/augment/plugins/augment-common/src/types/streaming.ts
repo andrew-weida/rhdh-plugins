@@ -105,6 +105,26 @@ export interface StreamToolFailedEvent {
   error: string;
 }
 
+/**
+ * MCP server is requesting structured input from the user mid-tool-call (elicitation).
+ * The frontend should render a form based on requestedSchema and POST the result to
+ * /chat/elicitation/respond. The tool call is paused until the user responds.
+ * @public
+ */
+export interface StreamElicitationRequestEvent {
+  type: 'stream.elicitation.request';
+  /** Unique ID for this elicitation request, used when posting the response. */
+  elicitationId: string;
+  /** Human-readable prompt from the MCP server explaining what input is needed. */
+  message: string;
+  /** JSON Schema (object type) describing the form fields to render. */
+  requestedSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
 /** Tool call requires human approval (HITL). @public */
 export interface StreamToolApprovalEvent {
   type: 'stream.tool.approval';
@@ -257,6 +277,7 @@ export type NormalizedStreamEvent =
   | StreamToolCompletedEvent
   | StreamToolFailedEvent
   | StreamToolApprovalEvent
+  | StreamElicitationRequestEvent
   | StreamBackendToolExecutingEvent
   | StreamRagResultsEvent
   | StreamAgentHandoffEvent

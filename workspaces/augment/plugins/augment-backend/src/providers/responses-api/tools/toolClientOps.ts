@@ -20,7 +20,11 @@ import type { McpAuthService } from '../../llamastack/McpAuthService';
 import type { MCPServerConfig } from '../../../types';
 import { toErrorMessage } from '../../../services/utils';
 import { isPrivateUrlWithDns } from '../../../services/utils/SsrfGuard';
-import { connectToMcpServer } from '../../../services/utils/mcpClient';
+import {
+  connectToMcpServer,
+  type ElicitFormParams,
+} from '../../../services/utils/mcpClient';
+import type { ElicitResult } from '../../../services/ElicitationStore';
 import type { ResolvedTool } from './toolDiscoveryHelpers';
 
 export async function connectAndListToolsSafe(
@@ -28,7 +32,13 @@ export async function connectAndListToolsSafe(
   mcpAuth: McpAuthService,
   skipTlsVerify: boolean,
   logger: LoggerService,
-  options?: { skipSsrfCheck?: boolean },
+  options?: {
+    skipSsrfCheck?: boolean;
+    onElicitation?: (
+      elicitationId: string,
+      params: ElicitFormParams,
+    ) => Promise<ElicitResult>;
+  },
 ): Promise<{
   client: Client | null;
   tools: Array<{ name: string; description?: string; inputSchema?: unknown }>;
@@ -51,6 +61,7 @@ export async function connectAndListToolsSafe(
       headers: authHeaders,
       skipTlsVerify,
       clientName: 'augment-backend',
+      onElicitation: options?.onElicitation,
     });
     logger.info(
       `[BackendToolExecutor] ${server.id} tools/list: ${tools.length} tool(s) [${tools.map(t => t.name).join(', ')}]`,

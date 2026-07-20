@@ -38,6 +38,7 @@ import type { SelectedAgentInfo } from '../WelcomeScreen';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
 import { StreamingMessage } from '../StreamingMessage';
 import { ToolApprovalDialog } from '../ToolApprovalDialog';
+import { ElicitationDialog } from '../ElicitationDialog';
 import { ChatInput } from '../ChatInput';
 import { useApi } from '@backstage/core-plugin-api';
 import { augmentApiRef } from '../../api';
@@ -46,6 +47,7 @@ import {
   useBranding,
   useStreamingChat,
   useToolApproval,
+  useElicitation,
   useChatViewMode,
 } from '../../hooks';
 import {
@@ -228,6 +230,16 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
       },
       onSetTyping: setIsTyping,
     });
+
+    // MCP elicitation hook (mid-tool-call user input)
+    const {
+      pendingElicitation,
+      isElicitationSubmitting,
+      elicitationError,
+      handleElicitationSubmit,
+      handleElicitationDecline,
+      handleElicitationCancel,
+    } = useElicitation({ streamingState });
 
     // Track isTyping in a ref so the imperative handle stays current
     const isTypingRef = useRef(isTyping);
@@ -625,6 +637,34 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
               onReject={handleReject}
               isSubmitting={isApprovalSubmitting}
               error={approvalError}
+            />
+          )}
+        </Dialog>
+
+        {/* Elicitation Dialog — MCP server requesting user input mid-tool-call */}
+        <Dialog
+          open={!!pendingElicitation}
+          maxWidth="sm"
+          fullWidth
+          disableEscapeKeyDown
+          PaperProps={{
+            sx: {
+              bgcolor: 'transparent',
+              boxShadow: 'none',
+              overflow: 'visible',
+            },
+          }}
+        >
+          {pendingElicitation && (
+            <ElicitationDialog
+              elicitationId={pendingElicitation.elicitationId}
+              message={pendingElicitation.message}
+              requestedSchema={pendingElicitation.requestedSchema}
+              onSubmit={handleElicitationSubmit}
+              onDecline={handleElicitationDecline}
+              onCancel={handleElicitationCancel}
+              isSubmitting={isElicitationSubmitting}
+              error={elicitationError}
             />
           )}
         </Dialog>

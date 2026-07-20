@@ -27,6 +27,7 @@ import type { ConfigResolutionService } from './ConfigResolutionService';
 import type { ClientManager } from './ClientManager';
 import { McpAuthService } from './McpAuthService';
 import { BackendToolExecutor } from './BackendToolExecutor';
+import type { ElicitationStore } from '../../services/ElicitationStore';
 import { VectorStoreService } from './VectorStoreService';
 import { DocumentSyncService } from './DocumentSyncService';
 import { ConversationService } from './ConversationService';
@@ -50,6 +51,7 @@ export interface OrchestratorInitDeps {
   adminConfig?: AdminConfigService;
   vectorStoreFacade: VectorStoreFacade;
   conversationFacade: ConversationFacade;
+  elicitationStore?: ElicitationStore;
 }
 
 export interface OrchestratorState {
@@ -209,6 +211,7 @@ export async function initializeOrchestrator(
       mcpAuth,
       logger,
       llamaStackConfig.skipTlsVerify ?? false,
+      deps.elicitationStore,
     );
     logger.info(
       `[Init] BackendToolExecutor singleton created (skipTlsVerify=${llamaStackConfig.skipTlsVerify ?? false})`,

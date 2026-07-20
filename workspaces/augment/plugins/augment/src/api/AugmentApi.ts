@@ -232,6 +232,17 @@ export interface AugmentApi {
    * Used when require_approval is configured for an MCP server
    *
    * LLAMA STACK WORKAROUND (tracked for removal):
+  /**
+   * Respond to an MCP elicitation request.
+   */
+  respondToElicitation(
+    elicitationId: string,
+    action: 'accept' | 'decline' | 'cancel',
+    content?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<{ success: boolean }>;
+
+  /**
    * toolName and toolArguments are required for approvals because Llama Stack's
    * mcp_approval_response does NOT auto-execute pending tools. The backend uses
    * these to send an explicit tool execution request instead.
@@ -965,6 +976,21 @@ export class AugmentApiClient implements AugmentApi {
 
   async createConversation(): Promise<{ conversationId: string }> {
     return conversationEndpoints.createConversation(this.conversationDeps);
+  }
+
+  async respondToElicitation(
+    elicitationId: string,
+    action: 'accept' | 'decline' | 'cancel',
+    content?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<{ success: boolean }> {
+    return chatEndpoints.respondToElicitation(
+      this.chatDeps,
+      elicitationId,
+      action,
+      content,
+      signal,
+    );
   }
 
   async submitToolApproval(

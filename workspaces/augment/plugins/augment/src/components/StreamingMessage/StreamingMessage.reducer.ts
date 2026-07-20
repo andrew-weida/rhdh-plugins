@@ -136,6 +136,7 @@ export function updateStreamingState(
   // events that would otherwise override the PENDING_APPROVAL phase.
   if (
     state.phase === STREAMING_PHASES.PENDING_APPROVAL ||
+    state.phase === STREAMING_PHASES.PENDING_ELICITATION ||
     state.phase === STREAMING_PHASES.FORM_INPUT ||
     state.phase === STREAMING_PHASES.AUTH_REQUIRED
   ) {
@@ -144,6 +145,7 @@ export function updateStreamingState(
       case EVENT_TYPES.STREAM_COMPLETED:
       case EVENT_TYPES.STREAM_ERROR:
       case EVENT_TYPES.STREAM_TOOL_APPROVAL:
+      case EVENT_TYPES.STREAM_ELICITATION_REQUEST:
       case EVENT_TYPES.STREAM_TOOL_COMPLETED:
       case EVENT_TYPES.STREAM_TOOL_FAILED:
       case EVENT_TYPES.STREAM_TOOL_DELTA:
@@ -177,6 +179,7 @@ export function updateStreamingState(
         reasoningDuration: undefined,
         reasoningStartTime: undefined,
         pendingApproval: undefined,
+        pendingElicitation: undefined,
         pendingForm: undefined,
         pendingAuth: undefined,
       };
@@ -239,6 +242,7 @@ export function updateStreamingState(
         errorCode: errorEvent.code,
         text: state.text || `Error: ${errorMessage}`,
         pendingApproval: undefined,
+        pendingElicitation: undefined,
         pendingForm: undefined,
         pendingAuth: undefined,
       };
@@ -438,6 +442,30 @@ export function updateStreamingState(
               }
             : tc,
         ),
+      };
+    }
+
+    case EVENT_TYPES.STREAM_ELICITATION_REQUEST: {
+      const elicit = event as {
+        elicitationId?: string;
+        message?: string;
+        requestedSchema?: {
+          type: 'object';
+          properties: Record<string, unknown>;
+          required?: string[];
+        };
+      };
+      return {
+        ...state,
+        phase: STREAMING_PHASES.PENDING_ELICITATION,
+        pendingElicitation: {
+          elicitationId: elicit.elicitationId || '',
+          message: elicit.message || '',
+          requestedSchema: elicit.requestedSchema ?? {
+            type: 'object',
+            properties: {},
+          },
+        },
       };
     }
 

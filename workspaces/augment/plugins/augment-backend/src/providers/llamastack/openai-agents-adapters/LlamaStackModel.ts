@@ -125,7 +125,12 @@ export class LlamaStackModel implements Model {
     const input =
       typeof request.input === 'string'
         ? request.input
-        : (request.input as unknown as ResponsesApiInputItem[]);
+        : (request.input as unknown as ResponsesApiInputItem[]).map(
+            item =>
+              this.denormalizeInputItem(
+                item as unknown as Record<string, unknown>,
+              ) as unknown as ResponsesApiInputItem,
+          );
 
     const instructions = request.systemInstructions ?? '';
 
@@ -227,6 +232,21 @@ export class LlamaStackModel implements Model {
       delete normalized.call_id;
     }
     return normalized;
+  }
+
+  /**
+   * Convert an agents-core input item (camelCase `callId`) back to the
+   * Llama Stack wire format (snake_case `call_id`).
+   */
+  private denormalizeInputItem(
+    item: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const denormalized = { ...item };
+    if ('callId' in denormalized) {
+      denormalized.call_id = denormalized.callId;
+      delete denormalized.callId;
+    }
+    return denormalized;
   }
 
   /**

@@ -184,7 +184,11 @@ export class LlamaStackModel implements Model {
 
     if (result.output) {
       for (const item of result.output) {
-        output.push(item as unknown as ModelResponse['output'][0]);
+        output.push(
+          this.normalizeOutputItem(
+            item as unknown as Record<string, unknown>,
+          ) as unknown as ModelResponse['output'][0],
+        );
       }
     } else if (typeof resultAny.content === 'string' && resultAny.content) {
       output.push({
@@ -208,6 +212,21 @@ export class LlamaStackModel implements Model {
       output,
       responseId: result.id,
     };
+  }
+
+  /**
+   * Convert a Llama Stack output item (snake_case `call_id`) to the
+   * agents-core format (camelCase `callId`).
+   */
+  private normalizeOutputItem(
+    item: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const normalized = { ...item };
+    if ('call_id' in normalized) {
+      normalized.callId = normalized.call_id;
+      delete normalized.call_id;
+    }
+    return normalized;
   }
 
   /**
@@ -240,7 +259,10 @@ export class LlamaStackModel implements Model {
                   (parsed.response?.usage?.input_tokens ?? 0) +
                   (parsed.response?.usage?.output_tokens ?? 0),
               },
-              output: parsed.response?.output ?? [],
+              output: (parsed.response?.output ?? []).map(
+                (item: Record<string, unknown>) =>
+                  this.normalizeOutputItem(item),
+              ),
             },
           };
 

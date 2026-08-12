@@ -54,6 +54,7 @@ export function useElicitation({
   const mountedRef = useRef(true);
   const submittingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const respondedIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     return () => {
@@ -67,7 +68,10 @@ export function useElicitation({
     if (
       streamingState?.phase === 'pending_elicitation' &&
       streamingState.pendingElicitation &&
-      !pendingElicitation
+      !pendingElicitation &&
+      !respondedIdsRef.current.has(
+        streamingState.pendingElicitation.elicitationId,
+      )
     ) {
       setPendingElicitation(streamingState.pendingElicitation);
       setElicitationError(null);
@@ -107,7 +111,7 @@ export function useElicitation({
           controller.signal,
         );
         if (!mountedRef.current) return;
-        // The tool call resumes on the backend; just clear the dialog.
+        respondedIdsRef.current.add(elicitationId);
         setPendingElicitation(null);
         setElicitationError(null);
       } catch (err) {

@@ -7401,7 +7401,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.25.2, @modelcontextprotocol/sdk@npm:^1.26.0":
+"@modelcontextprotocol/client@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@modelcontextprotocol/client@npm:2.0.0"
+  dependencies:
+    "@modelcontextprotocol/core": "npm:2.0.0"
+    cross-spawn: "npm:^7.0.5"
+    eventsource: "npm:^3.0.2"
+    eventsource-parser: "npm:^3.0.0"
+    jose: "npm:^6.1.3"
+    pkce-challenge: "npm:^5.0.0"
+    zod: "npm:^4.2.0"
+  checksum: 10c0/23d1d16539c76a69d1848dc67c495b3aa6d048946dd894ed449bca0de7ce9835a71904476c6eeb9f75fe8dfca1964c61372d9d7d283b7cabfa3258d288db6859
+  languageName: node
+  linkType: hard
+
+"@modelcontextprotocol/core@npm:2.0.0":
+  version: 2.0.0
+  resolution: "@modelcontextprotocol/core@npm:2.0.0"
+  dependencies:
+    zod: "npm:^4.2.0"
+  checksum: 10c0/1cb96fcebfb60651775bcaa3b1e92b47b9317239e9e0352a2d6a404f77d1abfb68ce5b462becd073cddc4db08f2f0024cd3c7dd2582e3463ddb958f65b73fbe3
+  languageName: node
+  linkType: hard
+
+"@modelcontextprotocol/sdk@npm:^1.26.0":
   version: 1.29.0
   resolution: "@modelcontextprotocol/sdk@npm:1.29.0"
   dependencies:
@@ -11326,7 +11350,7 @@ __metadata:
     "@backstage/plugin-auth-backend-module-oidc-provider": "npm:^0.4.10"
     "@backstage/plugin-permission-common": "npm:^0.9.2"
     "@kagenti/adk": "npm:^0.8.1"
-    "@modelcontextprotocol/sdk": "npm:^1.25.2"
+    "@modelcontextprotocol/client": "npm:^2.0.0"
     "@openai/agents-core": "npm:^0.13.0"
     "@red-hat-developer-hub/backstage-plugin-augment-common": "workspace:^"
     "@types/express": "npm:^4.17.6"
@@ -36517,6 +36541,13 @@ __metadata:
   version: 4.3.6
   resolution: "zod@npm:4.3.6"
   checksum: 10c0/860d25a81ab41d33aa25f8d0d07b091a04acb426e605f396227a796e9e800c44723ed96d0f53a512b57be3d1520f45bf69c0cb3b378a232a00787a2609625307
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.2.0":
+  version: 4.4.3
+  resolution: "zod@npm:4.4.3"
+  checksum: 10c0/7ea31b558e88f9faf44f31dd185e2e1cbf51fed3081787fb96cc2534749b50c0acfc6da7f0922a7353ed092dd358c7d50c28ea96c94d04af64191bd33152eca3
   languageName: node
   linkType: hard
 

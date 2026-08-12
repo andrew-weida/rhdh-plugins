@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import { Client } from '@modelcontextprotocol/client';
 import type { LoggerService } from '@backstage/backend-plugin-api';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { McpAuthService } from '../../llamastack/McpAuthService';
 import type { MCPServerConfig, ResponsesApiFunctionTool } from '../../../types';
 import { BACKEND_TOOL_DISCOVERY_TTL_MS } from '../../../constants';

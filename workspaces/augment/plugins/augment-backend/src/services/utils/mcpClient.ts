@@ -1,3 +1,8 @@
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from '@modelcontextprotocol/client';
+
 /*
  * Copyright Red Hat, Inc.
  *
@@ -13,9 +18,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 /**
  * Creates a custom fetch function that skips TLS certificate verification.

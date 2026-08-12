@@ -235,12 +235,33 @@ export class LlamaStackModel implements Model {
   }
 
   /**
-   * Convert an agents-core input item (camelCase `callId`) back to the
-   * Llama Stack wire format (snake_case `call_id`).
+   * Convert an agents-core input item to the Llama Stack wire format.
+   * Handles type renaming (function_call_result → function_call_output)
+   * and field renaming (callId → call_id).
    */
   private denormalizeInputItem(
     item: Record<string, unknown>,
   ): Record<string, unknown> {
+    if (item.type === 'function_call_result') {
+      const output = item.output;
+      let outputStr: string;
+      if (typeof output === 'string') {
+        outputStr = output;
+      } else if (
+        output &&
+        typeof output === 'object' &&
+        'text' in (output as Record<string, unknown>)
+      ) {
+        outputStr = String((output as Record<string, unknown>).text);
+      } else {
+        outputStr = JSON.stringify(output);
+      }
+      return {
+        type: 'function_call_output',
+        call_id: item.callId as string,
+        output: outputStr,
+      };
+    }
     const denormalized = { ...item };
     if ('callId' in denormalized) {
       denormalized.call_id = denormalized.callId;

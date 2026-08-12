@@ -72,7 +72,11 @@ export async function coordinatorChat(
   );
 
   const userInput = requireLastUserMessage(request, '[Chat] ');
-  const result = await runner.run(entryAgent, userInput, { maxTurns });
+  const result = await runner.run(entryAgent, userInput, {
+    maxTurns,
+    previousResponseId: request.previousResponseId,
+    conversationId: request.conversationId,
+  });
 
   return toChatResponse(result);
 }
@@ -121,6 +125,8 @@ export async function coordinatorChatStream(
       stream: true,
       maxTurns,
       signal,
+      previousResponseId: request.previousResponseId,
+      conversationId: request.conversationId,
     });
 
     for await (const event of streamed) {

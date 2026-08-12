@@ -114,6 +114,8 @@ export class OpenAIAgentsOrchestrator {
       const runner = new Runner({ modelProvider: provider });
       const result = await runner.run(defaultAgent, userInput, {
         maxTurns: maxTurns ?? 10,
+        previousResponseId: request.previousResponseId,
+        conversationId: request.conversationId,
       });
 
       this.saveConversationAgent(
@@ -173,6 +175,8 @@ export class OpenAIAgentsOrchestrator {
         stream: true,
         maxTurns: maxTurns ?? 10,
         signal,
+        previousResponseId: request.previousResponseId,
+        conversationId: request.conversationId,
       });
 
       for await (const event of streamed) {

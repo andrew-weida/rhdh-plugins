@@ -125,7 +125,12 @@ export class LlamaStackModel implements Model {
     const input =
       typeof request.input === 'string'
         ? request.input
-        : (request.input as unknown as ResponsesApiInputItem[]);
+        : (request.input as unknown as ResponsesApiInputItem[]).map(
+            item =>
+              this.denormalizeInputItem(
+                item as unknown as Record<string, unknown>,
+              ) as unknown as ResponsesApiInputItem,
+          );
 
     const instructions = request.systemInstructions ?? '';
 
@@ -184,7 +189,11 @@ export class LlamaStackModel implements Model {
 
     if (result.output) {
       for (const item of result.output) {
-        output.push(item as unknown as ModelResponse['output'][0]);
+        output.push(
+          this.normalizeOutputItem(
+            item as unknown as Record<string, unknown>,
+          ) as unknown as ModelResponse['output'][0],
+        );
       }
     } else if (typeof resultAny.content === 'string' && resultAny.content) {
       output.push({
@@ -208,6 +217,48 @@ export class LlamaStackModel implements Model {
       output,
       responseId: result.id,
     };
+  }
+
+  private normalizeOutputItem(
+    item: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const normalized = { ...item };
+    if ('call_id' in normalized) {
+      normalized.callId = normalized.call_id;
+      delete normalized.call_id;
+    }
+    return normalized;
+  }
+
+  private denormalizeInputItem(
+    item: Record<string, unknown>,
+  ): Record<string, unknown> {
+    if (item.type === 'function_call_result') {
+      const output = item.output;
+      let outputStr: string;
+      if (typeof output === 'string') {
+        outputStr = output;
+      } else if (
+        output &&
+        typeof output === 'object' &&
+        'text' in (output as Record<string, unknown>)
+      ) {
+        outputStr = String((output as Record<string, unknown>).text);
+      } else {
+        outputStr = JSON.stringify(output);
+      }
+      return {
+        type: 'function_call_output',
+        call_id: item.callId as string,
+        output: outputStr,
+      };
+    }
+    const denormalized = { ...item };
+    if ('callId' in denormalized) {
+      denormalized.call_id = denormalized.callId;
+      delete denormalized.callId;
+    }
+    return denormalized;
   }
 
   /**
@@ -240,7 +291,10 @@ export class LlamaStackModel implements Model {
                   (parsed.response?.usage?.input_tokens ?? 0) +
                   (parsed.response?.usage?.output_tokens ?? 0),
               },
-              output: parsed.response?.output ?? [],
+              output: (parsed.response?.output ?? []).map(
+                (item: Record<string, unknown>) =>
+                  this.normalizeOutputItem(item),
+              ),
             },
           };
 

@@ -212,6 +212,7 @@ export class ResponsesApiCoordinator {
         logger: this.logger,
         backendApprovalStore: this.backendApprovalStore,
         toolScopeService: this.toolScopeService,
+        elicitationStore: this.elicitationStore,
       });
       this.initializeBackendApprovalHandler();
 

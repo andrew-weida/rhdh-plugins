@@ -37,7 +37,7 @@ export class OpenAIAgentsOrchestrator {
   private readonly logger: LoggerService;
   private readonly chatService: ResponsesApiService;
   readonly backendApprovalStore?: BackendApprovalStore;
-  readonly elicitationStore = new ElicitationStore();
+  readonly elicitationStore: ElicitationStore;
 
   private readonly toolCache: ToolMetaCache = {
     cachedToolMeta: null,
@@ -53,10 +53,12 @@ export class OpenAIAgentsOrchestrator {
     logger: LoggerService;
     backendApprovalStore?: BackendApprovalStore;
     toolScopeService?: unknown;
+    elicitationStore: ElicitationStore;
   }) {
     this.chatService = options.chatService;
     this.logger = options.logger;
     this.backendApprovalStore = options.backendApprovalStore;
+    this.elicitationStore = options.elicitationStore;
   }
 
   invalidateToolCache(): void {

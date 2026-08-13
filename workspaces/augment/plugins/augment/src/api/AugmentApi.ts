@@ -272,6 +272,16 @@ export interface AugmentApi {
     };
   }>;
 
+  /**
+   * Submit user response to an MCP elicitation request.
+   */
+  submitElicitationResponse(
+    elicitationId: string,
+    action: 'accept' | 'decline',
+    content?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<{ success: boolean }>;
+
   // ===========================================================================
   // Chat Sessions (local DB — mirrors ai-virtual-agent pattern)
   // ===========================================================================
@@ -1003,6 +1013,21 @@ export class AugmentApiClient implements AugmentApi {
       toolArguments,
       signal,
       reason,
+    );
+  }
+
+  async submitElicitationResponse(
+    elicitationId: string,
+    action: 'accept' | 'decline',
+    content?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<{ success: boolean }> {
+    return chatEndpoints.submitElicitationResponse(
+      this.chatDeps,
+      elicitationId,
+      action,
+      content,
+      signal,
     );
   }
 

@@ -38,6 +38,7 @@ import type { SelectedAgentInfo } from '../WelcomeScreen';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
 import { StreamingMessage } from '../StreamingMessage';
 import { ToolApprovalDialog } from '../ToolApprovalDialog';
+import { ElicitationDialog } from '../ElicitationDialog';
 import { ChatInput } from '../ChatInput';
 import { useApi } from '@backstage/core-plugin-api';
 import { augmentApiRef } from '../../api';
@@ -48,6 +49,7 @@ import {
   useToolApproval,
   useChatViewMode,
 } from '../../hooks';
+import { useElicitation } from '../../hooks/useElicitation';
 import {
   useWelcomeData,
   useChatKeyboardShortcuts,
@@ -229,6 +231,15 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
       onSetTyping: setIsTyping,
     });
 
+    // Elicitation hook (MCP interactive input)
+    const {
+      pendingElicitation,
+      isElicitationSubmitting,
+      elicitationError,
+      handleElicitationSubmit,
+      handleElicitationDecline,
+    } = useElicitation({ streamingState });
+
     // Track isTyping in a ref so the imperative handle stays current
     const isTypingRef = useRef(isTyping);
     isTypingRef.current = isTyping;
@@ -312,7 +323,7 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
       isTyping,
       cancelRequest,
       chatInputRef,
-      isApprovalDialogOpen: !!pendingApproval,
+      isApprovalDialogOpen: !!pendingApproval || !!pendingElicitation,
       onShowShortcuts: handleShowShortcuts,
       messageCount: messages.length,
     });
@@ -625,6 +636,31 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
               onReject={handleReject}
               isSubmitting={isApprovalSubmitting}
               error={approvalError}
+            />
+          )}
+        </Dialog>
+
+        {/* MCP Elicitation Dialog - centered modal */}
+        <Dialog
+          open={!!pendingElicitation}
+          maxWidth="sm"
+          fullWidth
+          disableEscapeKeyDown
+          PaperProps={{
+            sx: {
+              bgcolor: 'transparent',
+              boxShadow: 'none',
+              overflow: 'visible',
+            },
+          }}
+        >
+          {pendingElicitation && (
+            <ElicitationDialog
+              elicitation={pendingElicitation}
+              onSubmit={handleElicitationSubmit}
+              onDecline={handleElicitationDecline}
+              isSubmitting={isElicitationSubmitting}
+              error={elicitationError}
             />
           )}
         </Dialog>

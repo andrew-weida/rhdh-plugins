@@ -20,6 +20,7 @@ import type { ChatRequest, ChatResponse } from '../../../types';
 import type { ResponsesApiService } from '../../responses-api/chat/ResponsesApiService';
 import type { ChatDeps } from '../../responses-api/chat/ResponsesApiService';
 import type { BackendApprovalStore } from '../../responses-api/tools/BackendApprovalStore';
+import { ElicitationStore } from '../../../services/ElicitationStore';
 import { LlamaStackProvider } from './LlamaStackProvider';
 import { buildAgentGraph } from './configMapper';
 import { toChatResponse } from './responseMapper';
@@ -36,6 +37,7 @@ export class OpenAIAgentsOrchestrator {
   private readonly logger: LoggerService;
   private readonly chatService: ResponsesApiService;
   readonly backendApprovalStore?: BackendApprovalStore;
+  readonly elicitationStore = new ElicitationStore();
 
   private readonly toolCache: ToolMetaCache = {
     cachedToolMeta: null,
@@ -63,8 +65,18 @@ export class OpenAIAgentsOrchestrator {
     this.toolCache.cachedDiscoveryGeneration = -1;
   }
 
-  async discoverBackendTools(deps: ChatDeps) {
-    return discoverBackendTools(deps, this.toolCache, this.logger);
+  async discoverBackendTools(
+    deps: ChatDeps,
+    elicitationCtx?: { onEvent: (event: string) => void },
+  ) {
+    return discoverBackendTools(
+      deps,
+      this.toolCache,
+      this.logger,
+      elicitationCtx
+        ? { onEvent: elicitationCtx.onEvent, store: this.elicitationStore }
+        : undefined,
+    );
   }
 
   warmUpToolCache(deps: ChatDeps): void {
@@ -149,6 +161,7 @@ export class OpenAIAgentsOrchestrator {
         deps,
         this.toolCache,
         this.logger,
+        { onEvent, store: this.elicitationStore },
       );
       const toolFilter = buildAgentToolFilter(agentsConfig, deps);
       const { defaultAgent } = buildAgentGraph(

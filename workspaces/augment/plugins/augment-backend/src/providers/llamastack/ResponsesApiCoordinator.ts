@@ -53,6 +53,7 @@ import { initializeOrchestrator } from './OrchestratorInitializer';
 import { OpenAIAgentsOrchestrator } from './openai-agents-adapters/OpenAIAgentsOrchestrator';
 import { AgentGraphManager } from './AgentGraphManager';
 import { BackendApprovalStore } from './BackendApprovalStore';
+import { ElicitationStore } from '../../services/ElicitationStore';
 import { BackendToolExecutor } from './BackendToolExecutor';
 import type { RuntimeConfigResolver } from '../../services/RuntimeConfigResolver';
 import type { AdminConfigService } from '../../services/AdminConfigService';
@@ -84,6 +85,7 @@ export class ResponsesApiCoordinator {
   private agentGraphManager: AgentGraphManager | null = null;
   private backendToolExecutor: BackendToolExecutor | null = null;
   private readonly backendApprovalStore = new BackendApprovalStore();
+  private readonly elicitationStore = new ElicitationStore();
   private toolScopeService: ToolScopeService | null = null;
 
   private initialized = false;
@@ -295,6 +297,10 @@ export class ResponsesApiCoordinator {
     if (!this.orchestrator)
       throw new Error('OpenAIAgentsOrchestrator not initialized');
     return this.orchestrator;
+  }
+
+  getElicitationStore(): ElicitationStore {
+    return this.elicitationStore;
   }
 
   getAgentGraphManager(): AgentGraphManager | null {

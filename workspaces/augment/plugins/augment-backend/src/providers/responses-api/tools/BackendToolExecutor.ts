@@ -32,6 +32,7 @@ import {
   executeToolOnClient,
   isSessionError,
 } from './toolClientOps';
+import type { ElicitationContext } from './toolClientOps';
 
 const SEPARATOR = '__';
 
@@ -287,6 +288,7 @@ export class BackendToolExecutor {
   async executeTool(
     functionName: string,
     argumentsJson: string,
+    elicitationCtx?: ElicitationContext,
   ): Promise<string> {
     const tool = this.resolveTool(functionName);
     if (!tool)
@@ -312,7 +314,13 @@ export class BackendToolExecutor {
             error: `Failed to connect to MCP server ${tool.serverId}`,
           });
       }
-      return await executeToolOnClient(client, tool, args, this.logger);
+      return await executeToolOnClient(
+        client,
+        tool,
+        args,
+        this.logger,
+        elicitationCtx,
+      );
     } catch (error) {
       const msg = toErrorMessage(error);
       if (isSessionError(msg)) {
@@ -331,6 +339,7 @@ export class BackendToolExecutor {
             tool,
             args,
             this.logger,
+            elicitationCtx,
           );
         } catch (retryError) {
           return JSON.stringify({

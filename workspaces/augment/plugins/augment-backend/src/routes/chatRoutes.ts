@@ -902,6 +902,46 @@ export function registerChatRoutes(
   });
 
   router.post(
+    '/chat/elicitation/respond',
+    withRoute(
+      'POST /chat/elicitation/respond',
+      'Failed to process elicitation response',
+      async (req, res) => {
+        const { elicitationId, action, content } = req.body;
+        if (!elicitationId || typeof elicitationId !== 'string') {
+          throw new InputError('Missing or invalid elicitationId');
+        }
+        if (action !== 'accept' && action !== 'decline') {
+          throw new InputError('action must be "accept" or "decline"');
+        }
+
+        const store = ctx.elicitationStore;
+        if (!store) {
+          res.status(501).json({
+            success: false,
+            error: 'Elicitation not supported by the current provider',
+          });
+          return;
+        }
+
+        const resolved = store.resolve(elicitationId, {
+          action,
+          content: action === 'accept' ? content : undefined,
+        });
+        if (!resolved) {
+          res.status(404).json({
+            success: false,
+            error: 'Elicitation not found or expired',
+          });
+          return;
+        }
+
+        res.json({ success: true });
+      },
+    ),
+  );
+
+  router.post(
     '/chat/approve',
     withRoute(
       'POST /chat/approve',

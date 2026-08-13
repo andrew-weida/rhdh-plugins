@@ -21,6 +21,7 @@ import { InputError } from '@backstage/errors';
 import type express from 'express';
 import type { AgenticProvider } from '../providers';
 import type { ChatSessionService } from '../services/ChatSessionService';
+import type { ElicitationStore } from '../services/ElicitationStore';
 import type { ChatRequest } from '../types';
 
 const SESSION_ID_PATTERN = /^[a-zA-Z0-9_-]{1,128}$/;
@@ -103,4 +104,7 @@ export interface RouteContext {
 
   /** Backstage CacheService for shared caching across routes. */
   cache?: CacheService;
+
+  /** In-memory store for pending MCP elicitation requests. */
+  elicitationStore?: ElicitationStore;
 }

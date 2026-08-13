@@ -18,6 +18,7 @@ import type { LoggerService } from '@backstage/backend-plugin-api';
 import { tool as createTool } from '@openai/agents-core';
 import type { FunctionTool as AgentsFunctionTool } from '@openai/agents-core';
 import type { ChatDeps } from '../../responses-api/chat/ResponsesApiService';
+import type { ElicitationContext } from '../../responses-api/tools/toolClientOps';
 
 export interface CachedToolMeta {
   name: string;
@@ -103,6 +104,7 @@ export async function discoverBackendTools(
   deps: ChatDeps,
   cache: ToolMetaCache,
   logger: LoggerService,
+  elicitationCtx?: ElicitationContext,
 ): Promise<AgentsFunctionTool[]> {
   if (!deps.backendToolExecutor) return [];
   const toolExecutor = deps.backendToolExecutor;
@@ -119,7 +121,11 @@ export async function discoverBackendTools(
           const args =
             typeof input === 'string' ? input : JSON.stringify(input ?? {});
           try {
-            return await toolExecutor.executeTool(t.name, args);
+            return await toolExecutor.executeTool(
+              t.name,
+              args,
+              elicitationCtx,
+            );
           } catch (execError) {
             const msg =
               execError instanceof Error

@@ -228,6 +228,18 @@ export interface StreamCitationEvent {
   citations: StreamCitationReference[];
 }
 
+/** MCP server requests interactive form input from the user (elicitation). @public */
+export interface StreamElicitationRequestEvent {
+  type: 'stream.elicitation.request';
+  elicitationId: string;
+  message: string;
+  requestedSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
 /** An error occurred during streaming. @public */
 export interface StreamErrorEvent {
   type: 'stream.error';
@@ -263,6 +275,7 @@ export type NormalizedStreamEvent =
   | StreamFormRequestEvent
   | StreamAuthRequiredEvent
   | StreamArtifactEvent
+  | StreamElicitationRequestEvent
   | StreamCitationEvent
   | StreamCompletedEvent
   | StreamErrorEvent;

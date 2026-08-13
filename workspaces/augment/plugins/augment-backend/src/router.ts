@@ -27,6 +27,7 @@ import Router from 'express-promise-router';
 import type { ProviderManager } from './providers';
 import { getProviderDescriptor } from './providers';
 import type { ChatSessionService } from './services/ChatSessionService';
+import type { ElicitationStore } from './services/ElicitationStore';
 import type { RouteContext } from './routes';
 import {
   registerStatusRoutes,
@@ -297,6 +298,12 @@ export async function createRouter({
     parseChatRequest,
     parseApprovalRequest,
     cache,
+    get elicitationStore(): ElicitationStore | undefined {
+      const p = providerManager.provider as {
+        getElicitationStore?: () => ElicitationStore;
+      };
+      return p.getElicitationStore?.();
+    },
   };
 
   const onConfigChanged = () => {

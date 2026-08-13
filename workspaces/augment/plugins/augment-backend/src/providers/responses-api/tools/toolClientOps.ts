@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Client } from '@modelcontextprotocol/client';
+import type { ElicitResult } from '@modelcontextprotocol/client';
 import type { LoggerService } from '@backstage/backend-plugin-api';
 import type { McpAuthService } from '../../llamastack/McpAuthService';
 import type { MCPServerConfig } from '../../../types';
@@ -21,6 +22,12 @@ import { toErrorMessage } from '../../../services/utils';
 import { isPrivateUrlWithDns } from '../../../services/utils/SsrfGuard';
 import { connectToMcpServer } from '../../../services/utils/mcpClient';
 import type { ResolvedTool } from './toolDiscoveryHelpers';
+import type { ElicitationStore } from '../../../services/ElicitationStore';
+
+export interface ElicitationContext {
+  onEvent: (event: string) => void;
+  store: ElicitationStore;
+}
 
 export async function connectAndListToolsSafe(
   server: MCPServerConfig,
@@ -68,7 +75,38 @@ export async function executeToolOnClient(
   tool: ResolvedTool,
   args: Record<string, unknown>,
   logger: LoggerService,
+  elicitationCtx?: ElicitationContext,
 ): Promise<string> {
+  if (elicitationCtx) {
+    client.setRequestHandler('elicitation/create', async request => {
+      const params = request.params as {
+        message?: string;
+        requestedSchema?: {
+          type: 'object';
+          properties: Record<string, unknown>;
+          required?: string[];
+        };
+      };
+      const elicitationId = `elicit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      elicitationCtx.onEvent(
+        JSON.stringify({
+          type: 'stream.elicitation.request',
+          elicitationId,
+          message: params.message ?? 'Input required',
+          requestedSchema: params.requestedSchema ?? {
+            type: 'object',
+            properties: {},
+          },
+        }),
+      );
+
+      return (await elicitationCtx.store.store(
+        elicitationId,
+      )) as ElicitResult;
+    });
+  }
+
   const result = await client.callTool({
     name: tool.originalName,
     arguments: args,

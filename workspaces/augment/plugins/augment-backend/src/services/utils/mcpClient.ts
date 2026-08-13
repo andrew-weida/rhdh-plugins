@@ -80,10 +80,10 @@ export async function connectToMcpServer(
     fetch: opts.skipTlsVerify ? createTlsSkipFetch() : undefined,
   });
 
-  const client = new Client({
-    name: opts.clientName ?? 'augment',
-    version: '1.0.0',
-  });
+  const client = new Client(
+    { name: opts.clientName ?? 'augment', version: '1.0.0' },
+    { capabilities: { elicitation: {} } },
+  );
 
   await client.connect(transport);
   const { tools } = await client.listTools();

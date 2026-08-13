@@ -280,3 +280,23 @@ export async function submitToolApproval(
     ),
   );
 }
+
+/**
+ * Submit response to an MCP elicitation request.
+ */
+export async function submitElicitationResponse(
+  deps: ChatApiDeps,
+  elicitationId: string,
+  action: 'accept' | 'decline',
+  content?: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<{ success: boolean }> {
+  return deps.fetchJson(
+    '/chat/elicitation/respond',
+    jsonBody(
+      { elicitationId, action, content: action === 'accept' ? content : undefined },
+      'POST',
+      { signal },
+    ),
+  );
+}

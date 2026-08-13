@@ -136,6 +136,7 @@ export function updateStreamingState(
   // events that would otherwise override the PENDING_APPROVAL phase.
   if (
     state.phase === STREAMING_PHASES.PENDING_APPROVAL ||
+    state.phase === STREAMING_PHASES.PENDING_ELICITATION ||
     state.phase === STREAMING_PHASES.FORM_INPUT ||
     state.phase === STREAMING_PHASES.AUTH_REQUIRED
   ) {
@@ -147,6 +148,7 @@ export function updateStreamingState(
       case EVENT_TYPES.STREAM_TOOL_COMPLETED:
       case EVENT_TYPES.STREAM_TOOL_FAILED:
       case EVENT_TYPES.STREAM_TOOL_DELTA:
+      case EVENT_TYPES.STREAM_ELICITATION_REQUEST:
       case EVENT_TYPES.STREAM_FORM_REQUEST:
       case EVENT_TYPES.STREAM_AUTH_REQUIRED:
       case EVENT_TYPES.STREAM_ARTIFACT:
@@ -438,6 +440,32 @@ export function updateStreamingState(
               }
             : tc,
         ),
+      };
+    }
+
+    // ---- MCP elicitation request ----
+
+    case EVENT_TYPES.STREAM_ELICITATION_REQUEST: {
+      const elicitEvent = event as {
+        elicitationId?: string;
+        message?: string;
+        requestedSchema?: {
+          type: 'object';
+          properties: Record<string, unknown>;
+          required?: string[];
+        };
+      };
+      return {
+        ...state,
+        phase: STREAMING_PHASES.PENDING_ELICITATION,
+        pendingElicitation: {
+          elicitationId: elicitEvent.elicitationId || '',
+          message: elicitEvent.message || 'Input required',
+          requestedSchema: elicitEvent.requestedSchema || {
+            type: 'object' as const,
+            properties: {},
+          },
+        },
       };
     }
 

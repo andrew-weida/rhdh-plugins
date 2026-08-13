@@ -50,7 +50,11 @@ export class ElicitationStore {
         this.remove(elicitationId, { action: 'decline' });
       }, TTL_MS);
 
-      this.pending.set(elicitationId, { resolve, createdAt: Date.now(), timer });
+      this.pending.set(elicitationId, {
+        resolve,
+        createdAt: Date.now(),
+        timer,
+      });
     });
   }
 

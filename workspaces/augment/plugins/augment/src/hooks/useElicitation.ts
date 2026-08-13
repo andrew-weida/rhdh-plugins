@@ -97,8 +97,7 @@ export function useElicitation({
         );
 
         if (mountedRef.current) {
-          respondedElicitationIdRef.current =
-            pendingElicitation.elicitationId;
+          respondedElicitationIdRef.current = pendingElicitation.elicitationId;
           setPendingElicitation(null);
         }
       } catch (err) {
@@ -144,8 +143,7 @@ export function useElicitation({
       );
 
       if (mountedRef.current) {
-        respondedElicitationIdRef.current =
-          pendingElicitation.elicitationId;
+        respondedElicitationIdRef.current = pendingElicitation.elicitationId;
         setPendingElicitation(null);
       }
     } catch (err) {

@@ -121,11 +121,7 @@ export async function discoverBackendTools(
           const args =
             typeof input === 'string' ? input : JSON.stringify(input ?? {});
           try {
-            return await toolExecutor.executeTool(
-              t.name,
-              args,
-              elicitationCtx,
-            );
+            return await toolExecutor.executeTool(t.name, args, elicitationCtx);
           } catch (execError) {
             const msg =
               execError instanceof Error

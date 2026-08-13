@@ -80,6 +80,7 @@ export type {
   StreamFormField,
   StreamFormDescriptor,
   StreamFormRequestEvent,
+  StreamElicitationRequestEvent,
   StreamSecretDemand,
   StreamAuthRequiredEvent,
   StreamArtifactEvent,

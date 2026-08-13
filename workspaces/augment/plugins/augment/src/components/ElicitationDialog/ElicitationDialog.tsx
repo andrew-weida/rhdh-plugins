@@ -324,8 +324,7 @@ export function ElicitationDialog({
             date: 'date',
             'date-time': 'datetime-local',
           };
-          const isNumeric =
-            prop.type === 'number' || prop.type === 'integer';
+          const isNumeric = prop.type === 'number' || prop.type === 'integer';
           const inputType = isNumeric
             ? 'number'
             : (prop.format && formatToType[prop.format]) || 'text';
@@ -381,9 +380,7 @@ export function ElicitationDialog({
           size="small"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          startIcon={
-            isSubmitting ? <CircularProgress size={14} /> : undefined
-          }
+          startIcon={isSubmitting ? <CircularProgress size={14} /> : undefined}
         >
           Submit
         </Button>

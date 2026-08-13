@@ -431,6 +431,14 @@ export interface AugmentApi {
   }>;
   // (undocumented)
   stopDevSpacesWorkspace(namespace: string, name: string): Promise<void>;
+  submitElicitationResponse(
+    elicitationId: string,
+    action: 'accept' | 'decline',
+    content?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<{
+    success: boolean;
+  }>;
   submitMessageFeedback(payload: {
     messageId: string;
     sessionId?: string;

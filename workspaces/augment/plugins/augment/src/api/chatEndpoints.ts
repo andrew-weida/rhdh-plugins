@@ -294,7 +294,11 @@ export async function submitElicitationResponse(
   return deps.fetchJson(
     '/chat/elicitation/respond',
     jsonBody(
-      { elicitationId, action, content: action === 'accept' ? content : undefined },
+      {
+        elicitationId,
+        action,
+        content: action === 'accept' ? content : undefined,
+      },
       'POST',
       { signal },
     ),

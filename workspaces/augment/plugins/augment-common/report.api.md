@@ -1493,6 +1493,7 @@ export type NormalizedStreamEvent =
   | StreamFormRequestEvent
   | StreamAuthRequiredEvent
   | StreamArtifactEvent
+  | StreamElicitationRequestEvent
   | StreamCitationEvent
   | StreamCompletedEvent
   | StreamErrorEvent;
@@ -1852,6 +1853,22 @@ export interface StreamCompletedEvent {
   type: 'stream.completed';
   // (undocumented)
   usage?: ResponseUsage;
+}
+
+// @public
+export interface StreamElicitationRequestEvent {
+  // (undocumented)
+  elicitationId: string;
+  // (undocumented)
+  message: string;
+  // (undocumented)
+  requestedSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+  // (undocumented)
+  type: 'stream.elicitation.request';
 }
 
 // @public

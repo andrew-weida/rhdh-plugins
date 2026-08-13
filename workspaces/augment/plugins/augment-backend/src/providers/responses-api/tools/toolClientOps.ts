@@ -102,9 +102,7 @@ export async function executeToolOnClient(
         }),
       );
 
-      return (await elicitationCtx.store.store(
-        elicitationId,
-      )) as ElicitResult;
+      return (await elicitationCtx.store.store(elicitationId)) as ElicitResult;
     });
   }
 

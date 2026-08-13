@@ -171,7 +171,7 @@ These settings **cannot** be changed from the admin UI. They require a YAML chan
 | `quickPrompts`                 | Read from YAML per request (no DB layer)                      |
 | `workflows`                    | Read from YAML per request (no DB layer)                      |
 | `mcpAuth`                      | Shared OAuth credentials for MCP servers                      |
-| `mcpClient.elicitation`        | Advertise MCP elicitation capability to servers                |
+| `mcpClient.elicitation`        | Advertise MCP elicitation capability to servers               |
 | `toolExecutionMode`            | `'direct'` vs `'backend'` MCP execution                       |
 | `serverCapabilities`           | Override auto-detected Llama Stack server capabilities        |
 | `provider`                     | Provider type (only `'llamastack'` supported)                 |

@@ -128,6 +128,10 @@ augment:
       url: 'https://mcp-server.example.com/mcp'
       requireApproval: 'never' # or 'always' or { always: [...], never: [...] }
 
+  # MCP client capabilities
+  mcpClient:
+    elicitation: true # Allow MCP servers to request interactive user input
+
   # Multi-agent orchestration
   agents:
     triage:

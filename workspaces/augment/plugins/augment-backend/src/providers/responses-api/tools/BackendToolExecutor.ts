@@ -50,6 +50,7 @@ export class BackendToolExecutor {
     private readonly mcpAuth: McpAuthService,
     private readonly logger: LoggerService,
     private readonly skipTlsVerify: boolean,
+    private readonly elicitation: boolean = false,
   ) {}
 
   getDiscoveryGeneration(): number {
@@ -109,7 +110,7 @@ export class BackendToolExecutor {
           this.mcpAuth,
           this.skipTlsVerify,
           this.logger,
-          { skipSsrfCheck: true },
+          { skipSsrfCheck: true, elicitation: this.elicitation },
         );
         return { server, serverTools, client };
       }),
@@ -366,7 +367,7 @@ export class BackendToolExecutor {
       this.mcpAuth,
       this.skipTlsVerify,
       this.logger,
-      { skipSsrfCheck: true },
+      { skipSsrfCheck: true, elicitation: this.elicitation },
     );
     if (client) this.clients.set(tool.serverId, client);
     return client;

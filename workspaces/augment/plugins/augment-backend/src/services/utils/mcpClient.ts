@@ -49,6 +49,7 @@ export interface McpConnectionOptions {
   headers?: Record<string, string>;
   skipTlsVerify?: boolean;
   clientName?: string;
+  elicitation?: boolean;
 }
 
 export interface McpToolInfo {
@@ -82,7 +83,12 @@ export async function connectToMcpServer(
 
   const client = new Client(
     { name: opts.clientName ?? 'augment', version: '1.0.0' },
-    { capabilities: { elicitation: {} } },
+    opts.elicitation
+      ? {
+          capabilities: { elicitation: {} },
+          versionNegotiation: { mode: 'auto' },
+        }
+      : {},
   );
 
   await client.connect(transport);

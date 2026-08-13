@@ -87,6 +87,8 @@ export interface EffectiveConfig {
   safetyPatterns?: string[];
   /** Branding overrides */
   branding?: Partial<BrandingConfig>;
+  /** Whether the MCP client advertises elicitation support (default: false) */
+  mcpClientElicitation?: boolean;
   /** Additional MCP servers added via admin UI (merged with YAML) */
   mcpServers?: MCPServerConfig[];
   /** Override safety enabled/disabled from admin panel */

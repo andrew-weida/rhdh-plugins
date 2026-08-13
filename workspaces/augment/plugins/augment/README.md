@@ -284,6 +284,10 @@ augment:
       type: streamable-http
       url: 'http://localhost:8080/mcp'
 
+  # Optional: MCP client capabilities
+  mcpClient:
+    elicitation: true # Allow servers to request interactive user input
+
   # Optional: Custom system prompt
   systemPrompt: 'You are a helpful documentation assistant...'
 

@@ -414,6 +414,7 @@ Key blocks:
 - `augment.kagenti.*` -- baseUrl, namespace, auth, sandbox, builds, etc. (~250 lines)
 - `augment.documents.*` -- sources, sync schedule
 - `augment.mcpServers.*` -- MCP server configs
+- `augment.mcpClient.*` -- MCP client capabilities (elicitation)
 - `augment.branding.*` -- app name, colors, logos
 - `augment.safety.*` / `augment.evaluation.*`
 - `augment.promptGroups.*` -- welcome screen cards

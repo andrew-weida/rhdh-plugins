@@ -265,6 +265,12 @@ export class ConfigLoader {
     );
   }
 
+  loadMcpClientElicitation(): boolean {
+    return (
+      this.config.getOptionalBoolean('augment.mcpClient.elicitation') ?? false
+    );
+  }
+
   loadToolExecutionMode(): 'direct' | 'backend' {
     const mode = this.config.getOptionalString('augment.toolExecutionMode');
     if (!mode) return 'backend';

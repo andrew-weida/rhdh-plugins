@@ -172,6 +172,7 @@ export class RuntimeConfigResolver {
       functions: ls.functions,
       token: ls.token,
       verboseStreamLogging: ls.verboseStreamLogging ?? false,
+      mcpClientElicitation: this.configLoader.loadMcpClientElicitation(),
       mcpServers: yamlMcpServers.length > 0 ? yamlMcpServers : undefined,
       branding: Object.keys(yamlBranding).length > 0 ? yamlBranding : undefined,
       reasoning: ls.reasoning,

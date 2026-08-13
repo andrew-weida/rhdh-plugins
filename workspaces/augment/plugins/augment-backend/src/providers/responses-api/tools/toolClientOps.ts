@@ -34,7 +34,7 @@ export async function connectAndListToolsSafe(
   mcpAuth: McpAuthService,
   skipTlsVerify: boolean,
   logger: LoggerService,
-  options?: { skipSsrfCheck?: boolean },
+  options?: { skipSsrfCheck?: boolean; elicitation?: boolean },
 ): Promise<{
   client: Client | null;
   tools: Array<{ name: string; description?: string; inputSchema?: unknown }>;
@@ -57,6 +57,7 @@ export async function connectAndListToolsSafe(
       headers: authHeaders,
       skipTlsVerify,
       clientName: 'augment-backend',
+      elicitation: options?.elicitation,
     });
     logger.info(
       `[BackendToolExecutor] ${server.id} tools/list: ${tools.length} tool(s) [${tools.map(t => t.name).join(', ')}]`,

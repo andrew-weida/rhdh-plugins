@@ -287,6 +287,10 @@ augment:
       type: streamable-http # or 'sse'
       url: http://kubernetes-mcp-server:8080/mcp
       requireApproval: 'never'
+
+  # Enable MCP elicitation support (allows servers to request user input during tool execution)
+  mcpClient:
+    elicitation: true
 ```
 
 ### How Authentication Works by Security Mode

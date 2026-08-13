@@ -688,6 +688,23 @@ export interface Config {
     }>;
 
     /**
+     * MCP client configuration — controls capabilities advertised
+     * when connecting to all MCP servers.
+     * @visibility backend
+     */
+    mcpClient?: {
+      /**
+       * Whether to advertise MCP elicitation (2026-07-28) support.
+       * When true the client announces the elicitation capability so
+       * servers may request interactive input from the user during
+       * tool execution.
+       * @visibility backend
+       * @defaultValue false
+       */
+      elicitation?: boolean;
+    };
+
+    /**
      * Branding configuration for enterprise customization
      * @visibility frontend
      */

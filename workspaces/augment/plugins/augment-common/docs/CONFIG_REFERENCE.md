@@ -71,6 +71,7 @@ When YAML fields are omitted, these defaults are applied by `ConfigLoader` and `
 | `security.mode`         | `'plugin-only'`                                                                 | —                             |
 | `vectorStoreIds`        | `[]` (auto-creates a vector store using `vectorStoreName`)                      | —                             |
 | `mcpServers`            | `[]` (none configured)                                                          | —                             |
+| `mcpClient.elicitation` | `false`                                                                         | —                             |
 | `agents`                | `undefined` (single-agent mode — no multi-agent orchestration)                  | —                             |
 | `documents`             | `null` (no document ingestion)                                                  | —                             |
 | `toolChoice`            | `undefined` (model decides, equivalent to `'auto'`)                             | —                             |
@@ -170,6 +171,7 @@ These settings **cannot** be changed from the admin UI. They require a YAML chan
 | `quickPrompts`                 | Read from YAML per request (no DB layer)                      |
 | `workflows`                    | Read from YAML per request (no DB layer)                      |
 | `mcpAuth`                      | Shared OAuth credentials for MCP servers                      |
+| `mcpClient.elicitation`        | Advertise MCP elicitation capability to servers                |
 | `toolExecutionMode`            | `'direct'` vs `'backend'` MCP execution                       |
 | `serverCapabilities`           | Override auto-detected Llama Stack server capabilities        |
 | `provider`                     | Provider type (only `'llamastack'` supported)                 |

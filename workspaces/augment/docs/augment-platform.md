@@ -122,6 +122,9 @@ mcpServers:
     serviceAccount:
       name: mcp-client-sa
       namespace: backstage
+
+mcpClient:
+  elicitation: true # advertise MCP elicitation support to servers
 ```
 
 **Two execution modes** (selected by `augment.toolExecutionMode`):

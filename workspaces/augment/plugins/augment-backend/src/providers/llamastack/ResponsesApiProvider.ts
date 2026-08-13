@@ -32,6 +32,7 @@ import type {
   ChatResponse,
 } from '../types';
 import { ResponsesApiCoordinator } from './ResponsesApiCoordinator';
+import type { ElicitationStore } from '../../services/ElicitationStore';
 import { SafetyService } from './SafetyService';
 import { EvaluationService } from './EvaluationService';
 import { normalizeLlamaStackEvent } from './StreamEventNormalizer';
@@ -301,6 +302,10 @@ export class ResponsesApiProvider implements AgenticProvider {
       },
       signal,
     );
+  }
+
+  getElicitationStore(): ElicitationStore {
+    return this.orchestrator.getElicitationStore();
   }
 
   get conversations(): ConversationCapability {

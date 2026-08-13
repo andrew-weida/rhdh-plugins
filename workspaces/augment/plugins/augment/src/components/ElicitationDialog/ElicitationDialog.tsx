@@ -37,12 +37,25 @@ interface ElicitationDialogProps {
   error?: string | null;
 }
 
+type ConstOption = { const: string; title?: string };
+
 type SchemaProperty = {
   type?: string;
+  title?: string;
   description?: string;
   enum?: string[];
   default?: unknown;
-  items?: { enum?: string[] };
+  minLength?: number;
+  maxLength?: number;
+  format?: string;
+  minimum?: number;
+  maximum?: number;
+  items?: {
+    type?: string;
+    enum?: string[];
+    anyOf?: Array<{ const?: string; title?: string }>;
+  };
+  oneOf?: Array<{ const?: string; title?: string }>;
 };
 
 function getDefaultValue(prop: SchemaProperty): unknown {
@@ -127,7 +140,8 @@ export function ElicitationDialog({
         {propertyEntries.map(([key, rawProp]) => {
           const prop = rawProp as SchemaProperty;
           const isRequired = required.has(key);
-          const label = `${key}${isRequired ? ' *' : ''}`;
+          const displayName = prop.title ?? key;
+          const label = `${displayName}${isRequired ? ' *' : ''}`;
 
           if (prop.type === 'boolean') {
             return (
@@ -143,7 +157,7 @@ export function ElicitationDialog({
                 }
                 label={
                   <Box>
-                    <Typography variant="body2">{key}</Typography>
+                    <Typography variant="body2">{displayName}</Typography>
                     {prop.description && (
                       <Typography variant="caption" color="text.secondary">
                         {prop.description}
@@ -183,45 +197,149 @@ export function ElicitationDialog({
             );
           }
 
-          if (
-            prop.type === 'array' &&
-            prop.items?.enum
-          ) {
-            const selected = (values[key] as string[]) || [];
+          if (prop.oneOf?.some(o => o.const !== undefined)) {
+            const options = prop.oneOf.filter(
+              (o): o is { const: string; title?: string } =>
+                o.const !== undefined,
+            );
             return (
-              <Box key={key}>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  {label}
-                </Typography>
+              <FormControl key={key} size="small" fullWidth>
+                <InputLabel>{label}</InputLabel>
+                <Select
+                  value={values[key] as string}
+                  onChange={e => handleChange(key, e.target.value)}
+                  label={label}
+                  disabled={isSubmitting}
+                >
+                  {options.map(opt => (
+                    <MenuItem key={opt.const} value={opt.const}>
+                      {opt.title ?? opt.const}
+                    </MenuItem>
+                  ))}
+                </Select>
                 {prop.description && (
                   <Typography
                     variant="caption"
-                    sx={{ mb: 0.5, display: 'block', color: 'text.secondary' }}
+                    sx={{ mt: 0.5, color: 'text.secondary' }}
                   >
                     {prop.description}
                   </Typography>
                 )}
-                {prop.items.enum.map(opt => (
-                  <FormControlLabel
-                    key={opt}
-                    control={
-                      <Checkbox
-                        checked={selected.includes(opt)}
-                        onChange={e => {
-                          const next = e.target.checked
-                            ? [...selected, opt]
-                            : selected.filter(s => s !== opt);
-                          handleChange(key, next);
-                        }}
-                        disabled={isSubmitting}
-                        size="small"
-                      />
-                    }
-                    label={opt}
-                  />
-                ))}
-              </Box>
+              </FormControl>
             );
+          }
+
+          if (prop.type === 'array') {
+            const selected = (values[key] as string[]) || [];
+
+            const anyOfOptions = prop.items?.anyOf?.filter(
+              (o): o is ConstOption => o.const !== undefined,
+            );
+            if (anyOfOptions?.length) {
+              return (
+                <Box key={key}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    {label}
+                  </Typography>
+                  {prop.description && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        mb: 0.5,
+                        display: 'block',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      {prop.description}
+                    </Typography>
+                  )}
+                  {anyOfOptions.map(opt => (
+                    <FormControlLabel
+                      key={opt.const}
+                      control={
+                        <Checkbox
+                          checked={selected.includes(opt.const)}
+                          onChange={e => {
+                            const next = e.target.checked
+                              ? [...selected, opt.const]
+                              : selected.filter(s => s !== opt.const);
+                            handleChange(key, next);
+                          }}
+                          disabled={isSubmitting}
+                          size="small"
+                        />
+                      }
+                      label={opt.title ?? opt.const}
+                    />
+                  ))}
+                </Box>
+              );
+            }
+
+            if (prop.items?.enum) {
+              return (
+                <Box key={key}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    {label}
+                  </Typography>
+                  {prop.description && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        mb: 0.5,
+                        display: 'block',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      {prop.description}
+                    </Typography>
+                  )}
+                  {prop.items.enum.map(opt => (
+                    <FormControlLabel
+                      key={opt}
+                      control={
+                        <Checkbox
+                          checked={selected.includes(opt)}
+                          onChange={e => {
+                            const next = e.target.checked
+                              ? [...selected, opt]
+                              : selected.filter(s => s !== opt);
+                            handleChange(key, next);
+                          }}
+                          disabled={isSubmitting}
+                          size="small"
+                        />
+                      }
+                      label={opt}
+                    />
+                  ))}
+                </Box>
+              );
+            }
+          }
+
+          const formatToType: Record<string, string> = {
+            email: 'email',
+            uri: 'url',
+            date: 'date',
+            'date-time': 'datetime-local',
+          };
+          const isNumeric =
+            prop.type === 'number' || prop.type === 'integer';
+          const inputType = isNumeric
+            ? 'number'
+            : (prop.format && formatToType[prop.format]) || 'text';
+
+          const inputProps: Record<string, unknown> = {};
+          if (isNumeric) {
+            if (prop.minimum !== undefined) inputProps.min = prop.minimum;
+            if (prop.maximum !== undefined) inputProps.max = prop.maximum;
+            if (prop.type === 'integer') inputProps.step = 1;
+          } else {
+            if (prop.minLength !== undefined)
+              inputProps.minLength = prop.minLength;
+            if (prop.maxLength !== undefined)
+              inputProps.maxLength = prop.maxLength;
           }
 
           return (
@@ -230,11 +348,8 @@ export function ElicitationDialog({
               label={label}
               value={values[key] as string}
               onChange={e => handleChange(key, e.target.value)}
-              type={
-                prop.type === 'number' || prop.type === 'integer'
-                  ? 'number'
-                  : 'text'
-              }
+              type={inputType}
+              inputProps={inputProps}
               helperText={prop.description}
               required={isRequired}
               disabled={isSubmitting}

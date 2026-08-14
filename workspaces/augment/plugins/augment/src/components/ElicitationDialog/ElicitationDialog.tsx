@@ -181,9 +181,22 @@ export function ElicitationDialog({
                   onChange={e => handleChange(key, e.target.value)}
                   label={label}
                   disabled={isSubmitting}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        display: 'flex',
+                        flexDirection: 'column',
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
                 >
                   {prop.enum.map(opt => (
-                    <MenuItem key={opt} value={opt}>
+                    <MenuItem
+                      key={opt}
+                      value={opt}
+                      sx={{ display: 'block', whiteSpace: 'normal' }}
+                    >
                       {opt}
                     </MenuItem>
                   ))}
@@ -213,9 +226,22 @@ export function ElicitationDialog({
                   onChange={e => handleChange(key, e.target.value)}
                   label={label}
                   disabled={isSubmitting}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        display: 'flex',
+                        flexDirection: 'column',
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
                 >
                   {options.map(opt => (
-                    <MenuItem key={opt.const} value={opt.const}>
+                    <MenuItem
+                      key={opt.const}
+                      value={opt.const}
+                      sx={{ display: 'block', whiteSpace: 'normal' }}
+                    >
                       {opt.title ?? opt.const}
                     </MenuItem>
                   ))}

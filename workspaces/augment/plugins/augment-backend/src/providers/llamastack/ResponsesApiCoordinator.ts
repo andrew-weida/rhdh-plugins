@@ -48,6 +48,7 @@ import { AdkOrchestrator } from './adk-adapters/AdkOrchestrator';
 import { AgentGraphManager } from './AgentGraphManager';
 import { BackendApprovalStore } from './BackendApprovalStore';
 import { BackendToolExecutor } from './BackendToolExecutor';
+import { ElicitationStore } from '../../services/ElicitationStore';
 import { BackendApprovalHandler } from './BackendApprovalHandler';
 import type { RuntimeConfigResolver } from '../../services/RuntimeConfigResolver';
 import type { AdminConfigService } from '../../services/AdminConfigService';
@@ -86,6 +87,7 @@ export class ResponsesApiCoordinator {
   private agentGraphManager: AgentGraphManager | null = null;
   private backendToolExecutor: BackendToolExecutor | null = null;
   private readonly backendApprovalStore = new BackendApprovalStore();
+  private readonly elicitationStore = new ElicitationStore();
   private toolScopeService: ToolScopeService | null = null;
 
   private initialized = false;
@@ -194,6 +196,14 @@ export class ResponsesApiCoordinator {
   }
 
   /**
+   * Expose the ElicitationStore so the route layer can resolve pending elicitations
+   * when the user responds via POST /chat/elicitation/respond.
+   */
+  getElicitationStore(): ElicitationStore {
+    return this.elicitationStore;
+  }
+
+  /**
    * Initialize the service by loading config and testing connection.
    * Delegates all wiring to initializeOrchestrator() and stores the result.
    */
@@ -239,6 +249,7 @@ export class ResponsesApiCoordinator {
         chatService: this.chatService,
         logger: this.logger,
         backendApprovalStore: this.backendApprovalStore,
+        elicitationStore: this.elicitationStore,
         toolScopeService: this.toolScopeService,
       });
       this.initializeBackendApprovalHandler();

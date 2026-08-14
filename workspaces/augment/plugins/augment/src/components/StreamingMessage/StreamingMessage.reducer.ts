@@ -89,6 +89,19 @@ export function updateStreamingState(
     }
   }
 
+  // Guard: once elicitation is pending, only process stream lifecycle events.
+  if (state.phase === STREAMING_PHASES.PENDING_ELICITATION) {
+    switch (event.type) {
+      case EVENT_TYPES.STREAM_STARTED:
+      case EVENT_TYPES.STREAM_COMPLETED:
+      case EVENT_TYPES.STREAM_ERROR:
+      case EVENT_TYPES.STREAM_ELICITATION_REQUEST:
+        break;
+      default:
+        return state;
+    }
+  }
+
   switch (event.type) {
     // ---- Response lifecycle ----
 
@@ -414,6 +427,33 @@ export function updateStreamingState(
         reasoning: undefined,
         reasoningDuration: undefined,
         reasoningStartTime: undefined,
+      };
+    }
+
+    // ---- MCP Elicitation ----
+
+    case EVENT_TYPES.STREAM_ELICITATION_REQUEST: {
+      const elicitation = event as {
+        elicitationId?: string;
+        message?: string;
+        requestedSchema?: {
+          type: 'object';
+          properties: Record<string, unknown>;
+          required?: string[];
+        };
+      };
+      return {
+        ...state,
+        phase: STREAMING_PHASES.PENDING_ELICITATION,
+        pendingElicitation: {
+          elicitationId: elicitation.elicitationId || '',
+          message: elicitation.message || '',
+          requestedSchema: elicitation.requestedSchema ?? {
+            type: 'object',
+            properties: {},
+          },
+          requestedAt: new Date().toISOString(),
+        },
       };
     }
 

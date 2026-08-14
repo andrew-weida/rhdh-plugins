@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { Client } from '@modelcontextprotocol/client';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 
 /**
  * Creates a custom fetch function that skips TLS certificate verification.
@@ -47,6 +47,8 @@ export interface McpConnectionOptions {
   headers?: Record<string, string>;
   skipTlsVerify?: boolean;
   clientName?: string;
+  /** Advertise elicitation capability to the MCP server (2026-07-28 spec). */
+  elicitation?: boolean;
 }
 
 export interface McpToolInfo {
@@ -78,10 +80,15 @@ export async function connectToMcpServer(
     fetch: opts.skipTlsVerify ? createTlsSkipFetch() : undefined,
   });
 
-  const client = new Client({
-    name: opts.clientName ?? 'augment',
-    version: '1.0.0',
-  });
+  const client = new Client(
+    { name: opts.clientName ?? 'augment', version: '1.0.0' },
+    opts.elicitation
+      ? {
+          capabilities: { elicitation: {} },
+          versionNegotiation: { mode: 'auto' },
+        }
+      : {},
+  );
 
   await client.connect(transport);
   const { tools } = await client.listTools();

@@ -226,6 +226,14 @@ export interface AugmentApi {
   ): Promise<{
     warnings?: string[];
   }>;
+  submitElicitationResponse(
+    elicitationId: string,
+    action: 'accept' | 'decline' | 'cancel',
+    content?: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<{
+    success: boolean;
+  }>;
   submitToolApproval(
     responseId: string,
     callId: string,

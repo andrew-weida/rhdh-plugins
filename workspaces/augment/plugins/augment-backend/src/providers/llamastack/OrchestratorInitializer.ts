@@ -203,15 +203,17 @@ export async function initializeOrchestrator(
     `[Init] toolExecutionMode resolved to '${toolExecutionMode}' ` +
       `(mcpServers=${mcpServers.length}: [${mcpServers.map(s => `${s.id}@${s.url}`).join(', ')}])`,
   );
+  const mcpClientElicitation = configLoader.loadMcpClientElicitation();
   let backendToolExecutor: BackendToolExecutor | null = null;
   if (toolExecutionMode === 'backend') {
     backendToolExecutor = new BackendToolExecutor(
       mcpAuth,
       logger,
       llamaStackConfig.skipTlsVerify ?? false,
+      mcpClientElicitation,
     );
     logger.info(
-      `[Init] BackendToolExecutor singleton created (skipTlsVerify=${llamaStackConfig.skipTlsVerify ?? false})`,
+      `[Init] BackendToolExecutor singleton created (skipTlsVerify=${llamaStackConfig.skipTlsVerify ?? false}, elicitation=${mcpClientElicitation})`,
     );
   } else {
     logger.info(

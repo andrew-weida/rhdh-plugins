@@ -64,6 +64,7 @@ export type {
   StreamAgentHandoffEvent,
   StreamCompletedEvent,
   StreamErrorEvent,
+  StreamElicitationRequestEvent,
 } from './streaming';
 
 export { DEFAULT_BRANDING, type BrandingConfig } from './branding';

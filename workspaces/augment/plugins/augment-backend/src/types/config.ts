@@ -168,6 +168,9 @@ export interface EffectiveConfig {
    */
   postToolInstructions?: string;
 
+  /** Enable MCP elicitation support — backend declares elicitation capability to MCP servers. */
+  mcpClientElicitation?: boolean;
+
   /**
    * Context window truncation strategy for the Responses API.
    * - 'auto': Server truncates old conversation context to fit the model's window

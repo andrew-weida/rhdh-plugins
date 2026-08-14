@@ -224,6 +224,19 @@ export async function chatStreamWithSession(
 /**
  * Submit tool approval (continue after approval).
  */
+export async function submitElicitationResponse(
+  deps: ChatApiDeps,
+  elicitationId: string,
+  action: 'accept' | 'decline' | 'cancel',
+  content?: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<{ success: boolean }> {
+  return deps.fetchJson(
+    '/chat/elicitation/respond',
+    jsonBody({ elicitationId, action, content }, 'POST', { signal }),
+  );
+}
+
 export async function submitToolApproval(
   deps: ChatApiDeps,
   responseId: string,

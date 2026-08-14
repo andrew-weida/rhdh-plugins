@@ -124,6 +124,10 @@ export class ResponsesApiProvider implements AgenticProvider {
     this.orchestrator.invalidateRuntimeConfig();
   }
 
+  getElicitationStore(): import('../../services/ElicitationStore').ElicitationStore {
+    return this.orchestrator.getElicitationStore();
+  }
+
   async getEffectiveConfig(): Promise<Record<string, unknown>> {
     const resolver = this.orchestrator.getResolver();
     if (!resolver) {

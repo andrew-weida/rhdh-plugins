@@ -25,16 +25,13 @@ const mockListTools = jest.fn();
 const mockCallTool = jest.fn();
 const mockClose = jest.fn().mockResolvedValue(undefined);
 
-jest.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
+jest.mock('@modelcontextprotocol/client', () => ({
   Client: jest.fn().mockImplementation(() => ({
     connect: mockConnect,
     listTools: mockListTools,
     callTool: mockCallTool,
     close: mockClose,
   })),
-}));
-
-jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
   StreamableHTTPClientTransport: jest.fn().mockImplementation(() => ({})),
 }));
 

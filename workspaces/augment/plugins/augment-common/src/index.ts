@@ -89,6 +89,7 @@ export type {
   StreamAgentHandoffEvent,
   StreamCompletedEvent,
   StreamErrorEvent,
+  StreamElicitationRequestEvent,
   ReasoningSummary,
   PendingApprovalInfo,
 } from './types';

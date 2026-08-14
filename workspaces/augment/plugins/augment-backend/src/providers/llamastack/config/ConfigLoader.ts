@@ -494,6 +494,17 @@ export class ConfigLoader {
   }
 
   /**
+   * Load whether MCP elicitation capability should be advertised to MCP servers.
+   * When true, the MCP client declares elicitation capability, allowing servers
+   * to request structured user input during tool execution.
+   */
+  loadMcpClientElicitation(): boolean {
+    return (
+      this.config.getOptionalBoolean('augment.mcpClient.elicitation') ?? false
+    );
+  }
+
+  /**
    * Load server capability overrides from app-config.
    * Returns undefined when no overrides are configured, so that
    * version-based defaults take effect.

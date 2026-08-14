@@ -15,9 +15,16 @@
  */
 
 import type { LoggerService } from '@backstage/backend-plugin-api';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { Client } from '@modelcontextprotocol/client';
+import type { ElicitResult } from '@modelcontextprotocol/client';
 import type { McpAuthService } from '../../llamastack/McpAuthService';
 import type { MCPServerConfig, ResponsesApiFunctionTool } from '../../../types';
+import type { ElicitationStore } from '../../../services/ElicitationStore';
+
+export interface ElicitationContext {
+  onEvent: (event: string) => void;
+  store: ElicitationStore;
+}
 import { BACKEND_TOOL_DISCOVERY_TTL_MS } from '../../../constants';
 import { toErrorMessage } from '../../../services/utils';
 import { isPrivateUrlWithDns } from '../../../services/utils/SsrfGuard';
@@ -36,7 +43,7 @@ interface ResolvedTool {
 
 /**
  * Executes MCP tool calls on behalf of LlamaStack using the official
- * @modelcontextprotocol/sdk Client.
+ * @modelcontextprotocol/client Client.
  *
  * When LlamaStack cannot reach MCP servers (network isolation),
  * this service converts MCP tools into function tools and proxies
@@ -65,6 +72,7 @@ export class BackendToolExecutor {
     private readonly mcpAuth: McpAuthService,
     private readonly logger: LoggerService,
     private readonly skipTlsVerify: boolean,
+    private readonly elicitation: boolean = false,
   ) {}
 
   getDiscoveryGeneration(): number {
@@ -480,6 +488,7 @@ export class BackendToolExecutor {
   async executeTool(
     functionName: string,
     argumentsJson: string,
+    elicitationCtx?: ElicitationContext,
   ): Promise<string> {
     const tool = this.resolveTool(functionName);
     if (!tool) {
@@ -517,10 +526,15 @@ export class BackendToolExecutor {
             error: `Failed to connect to MCP server ${tool.serverId}`,
           });
         }
-        return this.executeToolOnClient(reconnectedClient, tool, args);
+        return this.executeToolOnClient(
+          reconnectedClient,
+          tool,
+          args,
+          elicitationCtx,
+        );
       }
 
-      return await this.executeToolOnClient(client, tool, args);
+      return await this.executeToolOnClient(client, tool, args, elicitationCtx);
     } catch (error) {
       const msg = toErrorMessage(error);
 
@@ -542,7 +556,12 @@ export class BackendToolExecutor {
           });
         }
         try {
-          return await this.executeToolOnClient(freshClient, tool, args);
+          return await this.executeToolOnClient(
+            freshClient,
+            tool,
+            args,
+            elicitationCtx,
+          );
         } catch (retryError) {
           const retryMsg = toErrorMessage(retryError);
           this.logger.error(
@@ -599,6 +618,7 @@ export class BackendToolExecutor {
         headers: authHeaders,
         skipTlsVerify: this.skipTlsVerify,
         clientName: 'augment-backend',
+        elicitation: this.elicitation,
       });
 
       this.logger.info(
@@ -647,7 +667,36 @@ export class BackendToolExecutor {
     client: Client,
     tool: ResolvedTool,
     args: Record<string, unknown>,
+    elicitationCtx?: ElicitationContext,
   ): Promise<string> {
+    if (elicitationCtx) {
+      client.setRequestHandler('elicitation/create', async request => {
+        const params = request.params as {
+          message?: string;
+          requestedSchema?: {
+            type: 'object';
+            properties: Record<string, unknown>;
+            required?: string[];
+          };
+        };
+        const elicitationId = `elicit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        elicitationCtx.onEvent(
+          JSON.stringify({
+            type: 'stream.elicitation.request',
+            elicitationId,
+            message: params.message ?? 'Input required',
+            requestedSchema: params.requestedSchema ?? {
+              type: 'object',
+              properties: {},
+            },
+          }),
+        );
+        return (await elicitationCtx.store.store(
+          elicitationId,
+        )) as ElicitResult;
+      });
+    }
+
     const result = await client.callTool({
       name: tool.originalName,
       arguments: args,

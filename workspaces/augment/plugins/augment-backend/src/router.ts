@@ -217,6 +217,12 @@ export async function createRouter({
     get provider() {
       return providerManager.provider;
     },
+    get elicitationStore() {
+      const p = providerManager.provider as unknown as {
+        getElicitationStore?: () => import('./services/ElicitationStore').ElicitationStore;
+      };
+      return p.getElicitationStore?.();
+    },
     sessions,
     toErrorMessage,
     sendRouteError,

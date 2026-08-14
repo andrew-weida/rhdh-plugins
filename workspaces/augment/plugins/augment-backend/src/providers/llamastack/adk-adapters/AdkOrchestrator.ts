@@ -35,6 +35,8 @@ import type {
   BuildDepsForAgent,
 } from '../../responses-api/agents/agentGraph';
 import type { BackendApprovalStore } from '../../responses-api/tools/BackendApprovalStore';
+import type { ElicitationStore } from '../../../services/ElicitationStore';
+import type { ElicitationContext } from '../../responses-api/tools/BackendToolExecutor';
 import { BackstageModelAdapter } from './BackstageModelAdapter';
 import { toAdkLogger } from './BackstageLoggerAdapter';
 import { toAdkEffectiveConfig, toAdkMcpServerConfig } from './configAdapter';
@@ -79,16 +81,20 @@ export class AdkOrchestrator {
   private static readonly MAX_CONVERSATION_STATES = 500;
   private readonly conversationStates = new Map<string, RunState>();
 
+  private readonly elicitationStore?: ElicitationStore;
+
   constructor(options: {
     chatService: ResponsesApiService;
     logger: LoggerService;
     backendApprovalStore?: BackendApprovalStore;
+    elicitationStore?: ElicitationStore;
     toolScopeService?: unknown;
   }) {
     this.chatService = options.chatService;
     this.logger = options.logger;
     this.adkLogger = toAdkLogger(options.logger);
     this.backendApprovalStore = options.backendApprovalStore;
+    this.elicitationStore = options.elicitationStore;
   }
 
   /** Invalidate the cached tool list (e.g. after config change). */
@@ -159,6 +165,7 @@ export class AdkOrchestrator {
         signal,
         request.conversationId,
         resumeState,
+        onEvent,
       );
 
       const streamed = runStream(userInput, {
@@ -253,6 +260,7 @@ export class AdkOrchestrator {
     signal?: AbortSignal,
     conversationId?: string,
     resumeState?: RunState,
+    onEvent?: (event: string) => void,
   ): Promise<RunOptions> {
     const defaultAgent = snapshot.agents.get(snapshot.defaultAgentKey);
     if (!defaultAgent) {
@@ -266,7 +274,7 @@ export class AdkOrchestrator {
     const adkConfig = toAdkEffectiveConfig(deps.config);
     const adkAgents = this.snapshotToAdkAgents(snapshot);
     const adkMcpServers = deps.mcpServers.map(toAdkMcpServerConfig);
-    const functionTools = await this.discoverBackendTools(deps);
+    const functionTools = await this.discoverBackendTools(deps, onEvent);
 
     const toolResolver = this.buildToolResolver(functionTools, deps);
 
@@ -304,11 +312,19 @@ export class AdkOrchestrator {
    * requires an ADK-level change in `buildAgentTools`. Until then,
    * all function tools are visible to all agents.
    */
-  private async discoverBackendTools(deps: ChatDeps): Promise<FunctionTool[]> {
+  private async discoverBackendTools(
+    deps: ChatDeps,
+    onEvent?: (event: string) => void,
+  ): Promise<FunctionTool[]> {
     if (!deps.backendToolExecutor) return [];
     const toolExecutor = deps.backendToolExecutor;
 
     const meta = await this.ensureToolMetaCached(deps);
+
+    const elicitationCtx: ElicitationContext | undefined =
+      onEvent && this.elicitationStore
+        ? { onEvent, store: this.elicitationStore }
+        : undefined;
 
     return meta.map(tool => ({
       type: 'function' as const,
@@ -321,6 +337,7 @@ export class AdkOrchestrator {
           return await toolExecutor.executeTool(
             tool.name,
             JSON.stringify(args),
+            elicitationCtx,
           );
         } catch (execError) {
           const msg =

@@ -31,8 +31,14 @@ import { WelcomeScreen } from '../WelcomeScreen';
 import { VirtualizedMessageList } from './VirtualizedMessageList';
 import { StreamingMessage } from '../StreamingMessage';
 import { ToolApprovalDialog } from '../ToolApprovalDialog';
+import { ElicitationDialog } from '../ElicitationDialog';
 import { ChatInput } from '../ChatInput';
-import { useBranding, useStreamingChat, useToolApproval } from '../../hooks';
+import {
+  useBranding,
+  useStreamingChat,
+  useToolApproval,
+  useElicitation,
+} from '../../hooks';
 import {
   useWelcomeData,
   useChatKeyboardShortcuts,
@@ -137,6 +143,15 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
       onSetTyping: setIsTyping,
     });
 
+    // MCP elicitation hook
+    const {
+      pendingElicitation,
+      isElicitationSubmitting,
+      elicitationError,
+      handleElicitationSubmit,
+      handleElicitationDecline,
+    } = useElicitation({ streamingState });
+
     // Track isTyping in a ref so the imperative handle stays current
     const isTypingRef = useRef(isTyping);
     isTypingRef.current = isTyping;
@@ -185,7 +200,7 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
       isTyping,
       cancelRequest,
       chatInputRef,
-      isApprovalDialogOpen: !!pendingApproval,
+      isApprovalDialogOpen: !!pendingApproval || !!pendingElicitation,
       onShowShortcuts: handleShowShortcuts,
     });
 
@@ -342,6 +357,31 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
           )}
         </Dialog>
 
+        {/* Elicitation Dialog (MCP user input request) - centered modal */}
+        <Dialog
+          open={!!pendingElicitation}
+          maxWidth="sm"
+          fullWidth
+          disableEscapeKeyDown
+          PaperProps={{
+            sx: {
+              bgcolor: 'transparent',
+              boxShadow: 'none',
+              overflow: 'visible',
+            },
+          }}
+        >
+          {pendingElicitation && (
+            <ElicitationDialog
+              elicitation={pendingElicitation}
+              onSubmit={handleElicitationSubmit}
+              onDecline={handleElicitationDecline}
+              isSubmitting={isElicitationSubmitting}
+              error={elicitationError}
+            />
+          )}
+        </Dialog>
+
         {/* Input Area */}
         <ChatInput
           value={inputValue}
@@ -350,7 +390,7 @@ export const ChatContainer = forwardRef<ChatContainerRef, ChatContainerProps>(
           onStop={handleStopGeneration}
           onNewChat={onNewChat}
           placeholder={branding.inputPlaceholder}
-          isTyping={isTyping || loadingConversation}
+          isTyping={isTyping || loadingConversation || !!pendingElicitation}
           showNewChatButton={messages.length > 0}
           inputRef={chatInputRef}
           activeAgentName={streamingState?.currentAgent}

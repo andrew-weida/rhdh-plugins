@@ -252,6 +252,7 @@ export function registerChatRoutes(ctx: RouteContext): void {
     parseChatRequest,
     parseApprovalRequest,
     getUserRef,
+    elicitationStore,
   } = ctx;
 
   const withRoute = createWithRoute(logger, sendRouteError);
@@ -524,6 +525,64 @@ export function registerChatRoutes(ctx: RouteContext): void {
           pendingApproval: result.pendingApproval,
           handoff: result.handoff,
         });
+      },
+    ),
+  );
+
+  router.post(
+    '/chat/elicitation/respond',
+    withRoute(
+      'POST /chat/elicitation/respond',
+      'Failed to process elicitation response',
+      async (req, res) => {
+        const { elicitationId, action, content } = req.body as {
+          elicitationId?: unknown;
+          action?: unknown;
+          content?: unknown;
+        };
+
+        if (typeof elicitationId !== 'string' || !elicitationId) {
+          res
+            .status(400)
+            .json({ success: false, error: 'elicitationId is required' });
+          return;
+        }
+        if (
+          action !== 'accept' &&
+          action !== 'decline' &&
+          action !== 'cancel'
+        ) {
+          res.status(400).json({
+            success: false,
+            error: "action must be 'accept', 'decline', or 'cancel'",
+          });
+          return;
+        }
+
+        if (!elicitationStore) {
+          res.status(501).json({
+            success: false,
+            error: 'Elicitation is not supported by the current provider',
+          });
+          return;
+        }
+
+        const resolved = elicitationStore.resolve(elicitationId, {
+          action,
+          content: content as
+            | Record<string, string | number | boolean | string[]>
+            | undefined,
+        });
+
+        if (!resolved) {
+          res.status(404).json({
+            success: false,
+            error: 'Elicitation request not found or expired',
+          });
+          return;
+        }
+
+        res.json({ success: true });
       },
     ),
   );

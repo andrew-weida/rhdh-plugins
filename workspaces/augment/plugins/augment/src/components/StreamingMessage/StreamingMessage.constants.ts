@@ -36,6 +36,7 @@ export const STREAMING_PHASES = {
   CALLING_TOOLS: 'calling_tools',
   EXECUTING_BACKEND_TOOLS: 'executing_backend_tools',
   PENDING_APPROVAL: 'pending_approval',
+  PENDING_ELICITATION: 'pending_elicitation',
   GENERATING: 'generating',
   COMPLETED: 'completed',
 } as const;
@@ -66,6 +67,7 @@ export const EVENT_TYPES = {
   STREAM_AGENT_HANDOFF: 'stream.agent.handoff',
   STREAM_COMPLETED: 'stream.completed',
   STREAM_ERROR: 'stream.error',
+  STREAM_ELICITATION_REQUEST: 'stream.elicitation.request',
 } as const;
 
 /**
@@ -94,6 +96,7 @@ export const PHASE_LABELS: Record<string, string> = {
   [STREAMING_PHASES.CALLING_TOOLS]: 'Working',
   [STREAMING_PHASES.EXECUTING_BACKEND_TOOLS]: 'Working on it',
   [STREAMING_PHASES.PENDING_APPROVAL]: 'Waiting for your OK',
+  [STREAMING_PHASES.PENDING_ELICITATION]: 'Input required',
   [STREAMING_PHASES.GENERATING]: 'Responding',
   [STREAMING_PHASES.COMPLETED]: 'Done',
 };
@@ -110,6 +113,7 @@ export const PHASE_MESSAGES: Record<string, string> = {
   [STREAMING_PHASES.CALLING_TOOLS]: 'Working...',
   [STREAMING_PHASES.EXECUTING_BACKEND_TOOLS]: 'Working on it...',
   [STREAMING_PHASES.PENDING_APPROVAL]: 'Waiting for your OK...',
+  [STREAMING_PHASES.PENDING_ELICITATION]: 'Waiting for input...',
   [STREAMING_PHASES.GENERATING]: 'Responding...',
 };
 
@@ -134,6 +138,7 @@ export const PHASE_COLOR_KEYS: Record<string, BrandingColorKey> = {
   [STREAMING_PHASES.CALLING_TOOLS]: 'warningColor',
   [STREAMING_PHASES.EXECUTING_BACKEND_TOOLS]: 'warningColor',
   [STREAMING_PHASES.PENDING_APPROVAL]: 'errorColor',
+  [STREAMING_PHASES.PENDING_ELICITATION]: 'warningColor',
   [STREAMING_PHASES.GENERATING]: 'successColor',
   [STREAMING_PHASES.COMPLETED]: 'successColor',
 };

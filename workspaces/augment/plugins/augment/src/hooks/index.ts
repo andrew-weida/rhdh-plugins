@@ -42,6 +42,11 @@ export {
   type UseToolApprovalOptions,
   type UseToolApprovalReturn,
 } from './useToolApproval';
+export {
+  useElicitation,
+  type UseElicitationOptions,
+  type UseElicitationReturn,
+} from './useElicitation';
 export { useAdminConfig } from './useAdminConfig';
 export { useEffectiveConfig } from './useEffectiveConfig';
 export { useGeneratePrompt } from './useGeneratePrompt';

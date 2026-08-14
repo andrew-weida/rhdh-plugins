@@ -73,6 +73,20 @@ export interface PendingApprovalInfo {
 }
 
 /**
+ * Pending elicitation request from an MCP server
+ */
+export interface PendingElicitationInfo {
+  elicitationId: string;
+  message: string;
+  requestedSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+  requestedAt: string;
+}
+
+/**
  * All possible streaming phases
  */
 export type StreamingPhase =
@@ -84,6 +98,7 @@ export type StreamingPhase =
   | 'calling_tools'
   | 'executing_backend_tools'
   | 'pending_approval'
+  | 'pending_elicitation'
   | 'generating'
   | 'completed';
 
@@ -115,6 +130,7 @@ export interface StreamingState {
   text: string;
   completed: boolean;
   pendingApproval?: PendingApprovalInfo;
+  pendingElicitation?: PendingElicitationInfo;
   /** Error code from the backend (safety_violation, stream_error, etc.) */
   errorCode?: string;
   /** Token usage reported by the inference server (populated on response.completed) */

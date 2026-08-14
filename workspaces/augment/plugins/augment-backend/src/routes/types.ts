@@ -19,6 +19,7 @@ import type express from 'express';
 import type { AgenticProvider } from '../providers';
 import type { ChatSessionService } from '../services/ChatSessionService';
 import type { ChatRequest } from '../types';
+import type { ElicitationStore } from '../services/ElicitationStore';
 
 const SESSION_ID_PATTERN = /^[a-zA-Z0-9_-]{1,128}$/;
 
@@ -94,4 +95,7 @@ export interface RouteContext {
     toolName?: string;
     toolArguments?: string;
   };
+
+  /** ElicitationStore for the current provider, if supported. */
+  elicitationStore?: ElicitationStore;
 }

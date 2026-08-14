@@ -579,6 +579,21 @@ export interface Config {
     }>;
 
     /**
+     * MCP client capabilities configuration
+     * @visibility backend
+     */
+    mcpClient?: {
+      /**
+       * Enable MCP elicitation support.
+       * When true, the backend declares elicitation capability to MCP servers,
+       * allowing them to request structured user input during tool execution.
+       * Default: false
+       * @visibility backend
+       */
+      elicitation?: boolean;
+    };
+
+    /**
      * MCP server configurations
      * @visibility backend
      */

@@ -166,6 +166,18 @@ export interface StreamErrorEvent {
   code?: string;
 }
 
+/** MCP server is requesting structured user input during tool execution. @public */
+export interface StreamElicitationRequestEvent {
+  type: 'stream.elicitation.request';
+  elicitationId: string;
+  message: string;
+  requestedSchema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
 /**
  * Union of all normalized streaming events.
  *
@@ -190,4 +202,5 @@ export type NormalizedStreamEvent =
   | StreamRagResultsEvent
   | StreamAgentHandoffEvent
   | StreamCompletedEvent
-  | StreamErrorEvent;
+  | StreamErrorEvent
+  | StreamElicitationRequestEvent;

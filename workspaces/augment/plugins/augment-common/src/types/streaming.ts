@@ -171,6 +171,7 @@ export interface StreamElicitationRequestEvent {
   type: 'stream.elicitation.request';
   elicitationId: string;
   message: string;
+  serverLabel?: string;
   requestedSchema: {
     type: 'object';
     properties: Record<string, unknown>;

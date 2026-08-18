@@ -685,6 +685,7 @@ export class BackendToolExecutor {
             type: 'stream.elicitation.request',
             elicitationId,
             message: params.message ?? 'Input required',
+            serverLabel: tool.serverId,
             requestedSchema: params.requestedSchema ?? {
               type: 'object',
               properties: {},

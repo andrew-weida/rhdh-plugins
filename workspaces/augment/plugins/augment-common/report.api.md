@@ -567,6 +567,8 @@ export interface StreamElicitationRequestEvent {
     required?: string[];
   };
   // (undocumented)
+  serverLabel?: string;
+  // (undocumented)
   type: 'stream.elicitation.request';
 }
 

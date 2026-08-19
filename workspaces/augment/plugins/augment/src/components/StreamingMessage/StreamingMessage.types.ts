@@ -86,6 +86,7 @@ export interface PendingApprovalInfo {
 export interface PendingElicitationInfo {
   elicitationId: string;
   message: string;
+  serverLabel?: string;
   requestedSchema: {
     type: 'object';
     properties: Record<string, unknown>;

@@ -449,6 +449,7 @@ export function updateStreamingState(
       const elicitEvent = event as {
         elicitationId?: string;
         message?: string;
+        serverLabel?: string;
         requestedSchema?: {
           type: 'object';
           properties: Record<string, unknown>;
@@ -461,6 +462,7 @@ export function updateStreamingState(
         pendingElicitation: {
           elicitationId: elicitEvent.elicitationId || '',
           message: elicitEvent.message || 'Input required',
+          serverLabel: elicitEvent.serverLabel,
           requestedSchema: elicitEvent.requestedSchema || {
             type: 'object' as const,
             properties: {},

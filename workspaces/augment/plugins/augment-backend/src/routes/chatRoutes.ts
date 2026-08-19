@@ -76,16 +76,7 @@ function setupSseStream(
   const clientDisconnectedRef = { current: false };
   const abortController = new AbortController();
 
-  const keepaliveInterval = setInterval(() => {
-    if (!clientDisconnectedRef.current) {
-      res.write(': keepalive\n\n');
-      const flushable = res as FlushableResponse;
-      if (flushable.flush) flushable.flush();
-    }
-  }, 15_000);
-
   res.on('close', () => {
-    clearInterval(keepaliveInterval);
     clientDisconnectedRef.current = true;
     abortController.abort();
     onDisconnect?.();

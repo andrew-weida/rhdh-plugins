@@ -106,7 +106,11 @@ export async function streamRequest(
       });
 
       res.on('error', e => {
-        reject(new Error(`Streaming response error: ${e.message}`));
+        if (signal?.aborted) {
+          reject(new Error('Stream aborted by client'));
+        } else {
+          reject(new Error(`Streaming response error: ${e.message}`));
+        }
       });
     });
 

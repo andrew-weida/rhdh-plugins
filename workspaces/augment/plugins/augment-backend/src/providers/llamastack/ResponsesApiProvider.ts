@@ -78,6 +78,14 @@ export class ResponsesApiProvider implements AgenticProvider {
   } | null = null;
   private static readonly MODELS_CACHE_TTL_MS = 60_000;
 
+  private static extractModelId(model: {
+    id?: string;
+    identifier?: string;
+    provider_resource_id?: string;
+  }): string | undefined {
+    return model.id || model.identifier || model.provider_resource_id;
+  }
+
   constructor(options: {
     logger: LoggerService;
     config: RootConfigService;
@@ -149,6 +157,8 @@ export class ResponsesApiProvider implements AgenticProvider {
     const response = await client.request<{
       data: Array<{
         id: string;
+        identifier?: string;
+        provider_resource_id?: string;
         object?: string;
         owned_by?: string;
         model_type?: string;
@@ -157,16 +167,24 @@ export class ResponsesApiProvider implements AgenticProvider {
     }>('/v1/models', { method: 'GET' });
 
     const models = (response.data || [])
-      .filter(m => typeof m.id === 'string' && m.id.length > 0)
       .map(m => {
+        const id = ResponsesApiProvider.extractModelId(m);
+        if (!id) {
+          return null;
+        }
+
         const modelType =
           m.model_type ?? (m.custom_metadata?.model_type as string | undefined);
         return {
-          id: m.id,
+          id,
           ...(m.owned_by ? { owned_by: m.owned_by } : {}),
           ...(modelType ? { model_type: modelType } : {}),
         };
-      });
+      })
+      .filter(
+        (m): m is { id: string; owned_by?: string; model_type?: string } =>
+          m !== null,
+      );
 
     this._modelsCache = {
       data: models,
@@ -229,9 +247,19 @@ export class ResponsesApiProvider implements AgenticProvider {
   private async listAvailableModels(): Promise<Array<{ id: string }>> {
     const client = this.orchestrator.getClientManager().getExistingClient();
     const response = await client.request<{
-      data: Array<{ id: string }>;
+      data: Array<{
+        id?: string;
+        identifier?: string;
+        provider_resource_id?: string;
+      }>;
     }>('/v1/models', { method: 'GET' });
-    return response.data || [];
+
+    return (response.data || [])
+      .map(model => {
+        const id = ResponsesApiProvider.extractModelId(model);
+        return id ? { id } : null;
+      })
+      .filter((model): model is { id: string } => model !== null);
   }
 
   private async runMinimalInference(model: string): Promise<{

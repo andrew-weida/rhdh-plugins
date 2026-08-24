@@ -961,6 +961,87 @@ describe('ResponsesApiProvider', () => {
       });
     });
 
+    it('matches configured model against identifier field', async () => {
+      mockOrchestrator.getResolver.mockReturnValue({
+        resolve: jest
+          .fn()
+          .mockResolvedValue({
+            model: 'meta-llama/Meta-Llama-3.3-70B-Instruct',
+          }),
+      });
+      mockOrchestrator.getClientManager.mockReturnValue({
+        getExistingClient: jest.fn().mockReturnValue({
+          request: jest
+            .fn()
+            .mockResolvedValueOnce({
+              data: [
+                {
+                  identifier: 'meta-llama/Meta-Llama-3.3-70B-Instruct',
+                  provider_resource_id: 'Meta-Llama-3.3-70B-Instruct',
+                },
+              ],
+            })
+            .mockResolvedValueOnce({
+              output: [
+                {
+                  type: 'message',
+                  content: [{ type: 'output_text', text: 'hi' }],
+                },
+              ],
+              usage: { output_tokens: 1 },
+            }),
+        }),
+      });
+      const provider = createProvider();
+
+      const result = await provider.testModel();
+
+      expect(result).toEqual({
+        connected: true,
+        modelFound: true,
+        canGenerate: true,
+      });
+    });
+
+    it('matches configured model against provider_resource_id fallback', async () => {
+      mockOrchestrator.getResolver.mockReturnValue({
+        resolve: jest
+          .fn()
+          .mockResolvedValue({ model: 'Meta-Llama-3.3-70B-Instruct' }),
+      });
+      mockOrchestrator.getClientManager.mockReturnValue({
+        getExistingClient: jest.fn().mockReturnValue({
+          request: jest
+            .fn()
+            .mockResolvedValueOnce({
+              data: [
+                {
+                  provider_resource_id: 'Meta-Llama-3.3-70B-Instruct',
+                },
+              ],
+            })
+            .mockResolvedValueOnce({
+              output: [
+                {
+                  type: 'message',
+                  content: [{ type: 'output_text', text: 'ok' }],
+                },
+              ],
+              usage: { output_tokens: 1 },
+            }),
+        }),
+      });
+      const provider = createProvider();
+
+      const result = await provider.testModel();
+
+      expect(result).toEqual({
+        connected: true,
+        modelFound: true,
+        canGenerate: true,
+      });
+    });
+
     it('uses modelOverride when provided', async () => {
       mockOrchestrator.getResolver.mockReturnValue(null);
       mockOrchestrator.getClientManager.mockReturnValue({

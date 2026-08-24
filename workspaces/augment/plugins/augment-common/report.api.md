@@ -124,7 +124,7 @@ export interface BrandingConfig {
 }
 
 // @public
-export type BuiltInProviderType = 'llamastack' | 'googleadk';
+export type BuiltInProviderType = 'llamastack';
 
 // @public
 export interface ChatMessage {

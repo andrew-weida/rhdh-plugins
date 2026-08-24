@@ -67,6 +67,7 @@ function createMockConfigLoader(
     loadQuickActions: jest.Mock;
     loadPromptGroups: jest.Mock;
     loadToolExecutionMode: jest.Mock;
+    loadMcpClientElicitation: jest.Mock;
   }>,
 ): jest.Mocked<ConfigLoader> {
   return {
@@ -82,6 +83,7 @@ function createMockConfigLoader(
     loadQuickActions: jest.fn().mockReturnValue([]),
     loadPromptGroups: jest.fn().mockReturnValue([]),
     loadToolExecutionMode: jest.fn().mockReturnValue('direct'),
+    loadMcpClientElicitation: jest.fn().mockReturnValue(false),
     ...overrides,
   } as unknown as jest.Mocked<ConfigLoader>;
 }

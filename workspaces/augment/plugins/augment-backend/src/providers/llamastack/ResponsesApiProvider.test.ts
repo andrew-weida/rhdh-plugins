@@ -963,11 +963,9 @@ describe('ResponsesApiProvider', () => {
 
     it('matches configured model against identifier field', async () => {
       mockOrchestrator.getResolver.mockReturnValue({
-        resolve: jest
-          .fn()
-          .mockResolvedValue({
-            model: 'meta-llama/Meta-Llama-3.3-70B-Instruct',
-          }),
+        resolve: jest.fn().mockResolvedValue({
+          model: 'meta-llama/Meta-Llama-3.3-70B-Instruct',
+        }),
       });
       mockOrchestrator.getClientManager.mockReturnValue({
         getExistingClient: jest.fn().mockReturnValue({

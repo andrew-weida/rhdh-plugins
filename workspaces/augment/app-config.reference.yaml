@@ -1,0 +1,366 @@
+# =============================================================================
+# Complete Augment Plugin Configuration Reference
+# =============================================================================
+# All keys are under the top-level `augment:` section in app-config.yaml
+# Required fields are marked with (REQUIRED)
+
+app:
+  title: Augment AI Assistant
+  baseUrl: http://localhost:3000
+
+backend:
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+
+auth:
+  environment: development
+  providers:
+    guest: {}
+
+augment:
+  # ---------- Provider ----------
+  provider: llamastack # AI provider type (default: 'llamastack')
+
+  # ---------- Debug ----------
+  debug: false # Enable browser console debug logging (frontend)
+
+  # ---------- Llama Stack ----------
+  llamaStack:
+    baseUrl: http://localhost:8321 # (REQUIRED) Llama Stack server URL
+    model: meta-llama/Llama-3.3-70B-Instruct # (REQUIRED) Chat model ID
+    token: ${LLAMA_STACK_TOKEN} # API auth token (optional)
+
+    # -- Vector Store / RAG --
+    vectorStoreIds: # Explicit vector store IDs (searches all)
+      - vs_abc123
+    vectorStoreId: vs_abc123 # Single ID (backward compat; vectorStoreIds takes precedence)
+    vectorStoreName: augment-knowledge-base # Name for auto-created store
+    embeddingModel: sentence-transformers/all-MiniLM-L6-v2
+    embeddingDimension: 384
+
+    # -- Chunking --
+    chunkingStrategy: auto # 'auto' | 'static'
+    maxChunkSizeTokens: 800
+    chunkOverlapTokens: 400
+
+    # -- Search --
+    searchMode: semantic # 'auto' | 'keyword' | 'semantic' | 'hybrid'
+    bm25Weight: 0.5 # For hybrid mode (0-1)
+    semanticWeight: 0.5 # For hybrid mode (0-1)
+    fileSearchMaxResults: 10
+    fileSearchScoreThreshold: 0.3 # Min relevance score (0-1)
+
+    # -- Tool Choice --
+    toolChoice: auto # 'auto' | 'required' | 'none' | object
+    parallelToolCalls: true
+
+    # -- Built-in Tools --
+    enableWebSearch: false
+    enableCodeInterpreter: false
+
+    # -- Custom Functions --
+    functions:
+      - name: search_catalog
+        description: Search the Backstage catalog
+        parameters:
+          type: object
+          properties:
+            kind:
+              type: string
+              enum: [Component, API, System]
+          required: [kind]
+          additionalProperties: false
+        strict: true
+
+    # -- Structured Output --
+    textFormat:
+      type: json_schema
+      json_schema:
+        name: my_output
+        strict: true
+        schema:
+          type: object
+          properties:
+            answer:
+              type: string
+          required: [answer]
+          additionalProperties: false
+
+    # -- Reasoning (for models that support thinking) --
+    reasoning:
+      effort: medium # 'low' | 'medium' | 'high'
+      summary: auto # 'auto' | 'concise' | 'detailed' | 'none'
+
+    # -- Tool Scoping (TF-IDF based) --
+    toolScoping:
+      enabled: false
+      maxToolsPerTurn: 20
+      activationThreshold: 10 # Min total tools to activate scoping
+      minScore: 0.1
+
+    # -- Production Parameters --
+    maxToolCalls: 50
+    maxOutputTokens: 4096
+    temperature: 0.7
+    safetyIdentifier: my-org
+    truncation: disabled # 'auto' | 'disabled'
+
+    # -- Operational --
+    skipTlsVerify: false
+    verboseStreamLogging: false
+    zdrMode: false # Zero Data Retention mode
+
+  # ---------- System Prompt ----------
+  systemPrompt: You are a helpful platform assistant.
+
+  # ---------- Post-Tool Instructions ----------
+  postToolInstructions: Summarize tool results concisely.
+
+  # ---------- Tool Execution Mode ----------
+  toolExecutionMode: backend # 'backend' | 'direct'
+
+  # ---------- MCP Client ----------
+  mcpClient:
+    elicitation: false # Enable MCP elicitation (interactive tool input forms)
+
+  # ---------- MCP Servers ----------
+  mcpServers:
+    - id: openshift
+      name: OpenShift MCP
+      type: streamable-http # 'streamable-http' | 'sse'
+      url: http://localhost:3001/mcp
+      requireApproval: never # 'always' | 'never' | object with always/never arrays
+      # requireApproval:
+      #   always: [dangerous_tool]
+      #   never: [safe_tool]
+      oauth:
+        tokenUrl: https://keycloak.example.com/realms/demo/protocol/openid-connect/token
+        clientId: mcp-client
+        clientSecret: ${MCP_OAUTH_SECRET}
+        scopes:
+          - openid
+      # serviceAccount:                # Alternative to oauth
+      #   name: mcp-client-sa
+      #   namespace: backstage
+
+  # ---------- Shared MCP Auth ----------
+  mcpAuth:
+    - serverId: openshift
+      oauth:
+        tokenUrl: https://keycloak.example.com/realms/demo/protocol/openid-connect/token
+        clientId: mcp-client
+        clientSecret: ${MCP_OAUTH_SECRET}
+        scopes:
+          - openid
+
+  # ---------- Security ----------
+  security:
+    mode: plugin-only # 'none' | 'plugin-only' | 'full'
+    accessDeniedMessage: Contact your admin for access.
+    adminUsers: # Fallback admin list (when RBAC is disabled)
+      - user:default/admin
+    mcpOAuth:
+      tokenUrl: https://keycloak.example.com/realms/demo/protocol/openid-connect/token
+      clientId: augment-backend
+      clientSecret: ${MCP_OAUTH_CLIENT_SECRET}
+      scopes:
+        - openid
+
+  # ---------- Safety ----------
+  safety:
+    enabled: false
+    registerShields:
+      - shieldId: llama-guard
+        providerId: llama-guard
+        providerShieldId: meta-llama/Llama-Guard-3-8B
+    inputShields:
+      - llama-guard
+    outputShields:
+      - llama-guard
+    onError: block # 'allow' | 'block'
+
+  # ---------- Evaluation ----------
+  evaluation:
+    enabled: false
+    scoringFunctions:
+      - braintrust::answer-relevancy
+      - braintrust::faithfulness
+    minScoreThreshold: 0.7
+    onError: skip # 'skip' | 'fail'
+
+  # ---------- Documents (RAG Ingestion) ----------
+  documents:
+    syncMode: append # 'full' | 'append'
+    syncSchedule: 1h
+    sources:
+      - type: directory
+        path: ./docs
+        patterns:
+          - '**/*.md'
+      - type: url
+        urls:
+          - https://example.com/docs/guide.md
+      - type: github
+        repo: myorg/myrepo
+        branch: main
+        path: docs/
+        patterns:
+          - '**/*.md'
+        token: ${GITHUB_TOKEN}
+
+  # ---------- Server Capability Overrides ----------
+  serverCapabilities:
+    functionTools: true
+    strictField: true
+    maxOutputTokens: true
+    mcpTools: true
+    parallelToolCalls: true
+
+  # ---------- Branding ----------
+  branding:
+    appName: Augment
+    tagline: Your AI-powered assistant
+    primaryColor: '#9333ea'
+    secondaryColor: '#8b5cf6'
+    successColor: '#10b981'
+    warningColor: '#f59e0b'
+    errorColor: '#ef4444'
+    infoColor: '#0ea5e9'
+    logoUrl: /static/logo.svg
+    botAvatarUrl: https://example.com/bot.png
+    themePreset: default # 'default' | 'enterprise'
+
+  # ---------- Quick Prompts ----------
+  quickPrompts:
+    - title: Check Status
+      description: Get platform health
+      prompt: What is the current platform status?
+      category: Operations
+
+  # ---------- Prompt Groups (Welcome Screen) ----------
+  promptGroups:
+    - id: getting-started
+      title: Getting Started
+      description: Common tasks to get up and running
+      icon: rocket
+      color: '#9333ea'
+      order: 1
+      cards:
+        - title: Explore the Catalog
+          description: Find components and services
+          prompt: What's in the Backstage catalog?
+          icon: search
+        - title: Coming Soon Feature
+          description: Not ready yet
+          prompt: placeholder
+          icon: lock
+          comingSoon: true
+          comingSoonLabel: Coming Q4
+
+  # ---------- Workflows ----------
+  workflows:
+    - id: deploy-review
+      name: Deployment Review
+      description: Step-by-step deployment check
+      icon: rocket
+      category: Deploy
+      comingSoon: false
+      steps:
+        - title: Check prerequisites
+          prompt: Are all pre-deployment checks passing?
+          description: Verify CI, tests, approvals
+        - title: Review changes
+          prompt: Summarize the changes being deployed
+
+  # ---------- Multi-Agent ----------
+  defaultAgent: router # Entry agent key (must match a key in agents)
+  maxAgentTurns: 10 # Max internal turns per request
+
+  agents:
+    router:
+      name: Router
+      instructions: |
+        You are a triage agent. Route queries to the appropriate specialist.
+      handoffDescription: Routes to specialists
+      model: meta-llama/Llama-3.3-70B-Instruct # Override global model
+      handoffs:
+        - catalog-expert
+        - ops-expert
+      # asTools:                        # Call agents as tools (retains control)
+      #   - summarizer
+      enableRAG: false
+      enableWebSearch: false
+      enableCodeInterpreter: false
+      mcpServers: []
+      toolChoice: auto
+      temperature: 0.1
+      maxOutputTokens: 200
+      maxToolCalls: 5
+      truncation: auto
+      enabled: true
+      resetToolChoice: true # Reset toolChoice to auto after tool use
+      nestHandoffHistory: false # Wrap history into XML on handoff
+
+    catalog-expert:
+      name: Catalog Expert
+      instructions: |
+        You specialize in Backstage catalog queries.
+      handoffDescription: Handles catalog questions
+      handoffs:
+        - router
+      enableRAG: true
+      vectorStoreIds:
+        - vs_catalog
+      mcpServers:
+        - openshift
+      temperature: 0.7
+      maxOutputTokens: 2048
+      handoffInputSchema: # Structured metadata for handoff
+        type: object
+        properties:
+          reason:
+            type: string
+        required: [reason]
+      handoffInputFilter: none # 'none' | 'removeToolCalls' | 'summaryOnly'
+      toolUseBehavior: run_llm_again # 'run_llm_again' | 'stop_on_first_tool'
+      outputSchema: # Structured output for this agent
+        type: json_schema
+        json_schema:
+          name: catalog_result
+          strict: true
+          schema:
+            type: object
+            properties:
+              entities:
+                type: array
+                items:
+                  type: string
+            required: [entities]
+            additionalProperties: false
+      reasoning:
+        effort: high
+      functions: # Agent-specific custom functions
+        - name: lookup_entity
+          description: Look up a catalog entity
+          parameters:
+            type: object
+            properties:
+              name: { type: string }
+            required: [name]
+          strict: true
+      toolGuardrails:
+        - toolName: dangerous_action
+          type: input
+          rule: block
+          pattern: 'DROP TABLE'
+      guardrails:
+        - llama-guard
+      promptRef: # Llama Stack server-managed prompt
+        id: catalog-expert-v2
+        version: 3
+        variables:
+          org: my-org

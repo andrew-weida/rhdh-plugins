@@ -64,12 +64,6 @@ describe('provider config key utilities', () => {
       expect(scopedConfigKey('llamastack', 'model')).toBe('llamastack::model');
     });
 
-    it('works with googleadk provider', () => {
-      expect(scopedConfigKey('googleadk', 'baseUrl')).toBe(
-        'googleadk::baseUrl',
-      );
-    });
-
     it('handles arbitrary key strings', () => {
       expect(scopedConfigKey('llamastack', 'customKey')).toBe(
         'llamastack::customKey',

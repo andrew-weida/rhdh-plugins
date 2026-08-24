@@ -22,9 +22,9 @@ import {
 } from './registry';
 
 describe('provider registry', () => {
-  it('PROVIDER_REGISTRY contains both llamastack and googleadk entries', () => {
+  it('PROVIDER_REGISTRY contains llamastack entry', () => {
     expect(PROVIDER_REGISTRY.has('llamastack')).toBe(true);
-    expect(PROVIDER_REGISTRY.has('googleadk')).toBe(true);
+    expect(PROVIDER_REGISTRY.has('googleadk')).toBe(false);
   });
 
   it('getProviderDescriptor("llamastack") returns descriptor with implemented: true', () => {
@@ -32,13 +32,6 @@ describe('provider registry', () => {
     expect(d).toBeDefined();
     expect(d!.id).toBe('llamastack');
     expect(d!.implemented).toBe(true);
-  });
-
-  it('getProviderDescriptor("googleadk") returns descriptor with implemented: false', () => {
-    const d = getProviderDescriptor('googleadk');
-    expect(d).toBeDefined();
-    expect(d!.id).toBe('googleadk');
-    expect(d!.implemented).toBe(false);
   });
 
   it('getProviderDescriptor("unknown") returns undefined', () => {
@@ -51,9 +44,8 @@ describe('provider registry', () => {
 
   it('getAllProviderDescriptors returns all providers sorted by displayName', () => {
     const all = getAllProviderDescriptors();
-    expect(all).toHaveLength(2);
-    expect(all[0].displayName).toBe('Google ADK');
-    expect(all[1].displayName).toBe('Llama Stack');
+    expect(all).toHaveLength(1);
+    expect(all[0].displayName).toBe('Llama Stack');
   });
 
   it('isValidProviderType("llamastack") returns true', () => {
@@ -74,16 +66,6 @@ describe('provider registry', () => {
       conversations: true,
       mcpTools: true,
     });
-  });
-
-  it('GoogleADK descriptor has chat, conversations, mcpTools true and others false', () => {
-    const d = getProviderDescriptor('googleadk')!;
-    expect(d.capabilities.chat).toBe(true);
-    expect(d.capabilities.conversations).toBe(true);
-    expect(d.capabilities.mcpTools).toBe(true);
-    expect(d.capabilities.rag).toBe(false);
-    expect(d.capabilities.safety).toBe(false);
-    expect(d.capabilities.evaluation).toBe(false);
   });
 
   it('LlamaStack has configFields with at least model and baseUrl', () => {

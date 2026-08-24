@@ -90,25 +90,6 @@ const BUILT_IN_PROVIDERS: ReadonlyMap<string, ProviderDescriptor> = new Map<
       ],
     },
   ],
-  [
-    'googleadk',
-    {
-      id: 'googleadk',
-      displayName: 'Google ADK',
-      description:
-        'Google Agent Development Kit -- build agents with Gemini models',
-      implemented: false,
-      capabilities: {
-        chat: true,
-        rag: false,
-        safety: false,
-        evaluation: false,
-        conversations: true,
-        mcpTools: true,
-      },
-      configFields: [],
-    },
-  ],
 ]);
 
 /**

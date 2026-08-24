@@ -18,7 +18,7 @@ import { ProviderManager } from './ProviderManager';
 import type { AgenticProvider } from './types';
 import { createMockLogger } from '../test-utils/mocks';
 
-type ProviderType = 'llamastack' | 'googleadk';
+type ProviderType = 'llamastack' | 'mock-provider';
 
 function createMockProvider(id: ProviderType): AgenticProvider {
   return {
@@ -50,13 +50,13 @@ describe('ProviderManager', () => {
   describe('switchProvider', () => {
     it('creates, initializes, and postInitializes new provider, then shuts down old one', async () => {
       const oldProvider = createMockProvider('llamastack');
-      const newProvider = createMockProvider('googleadk');
+      const newProvider = createMockProvider('mock-provider');
       const factory = jest.fn().mockReturnValue(newProvider);
       const manager = new ProviderManager(oldProvider, factory, logger);
 
-      await manager.switchProvider('googleadk');
+      await manager.switchProvider('mock-provider');
 
-      expect(factory).toHaveBeenCalledWith('googleadk');
+      expect(factory).toHaveBeenCalledWith('mock-provider');
       expect(newProvider.initialize).toHaveBeenCalled();
       expect(newProvider.postInitialize).toHaveBeenCalled();
       expect(oldProvider.shutdown).toHaveBeenCalled();
@@ -84,12 +84,12 @@ describe('ProviderManager', () => {
         resolveInit = r;
       });
       const oldProvider = createMockProvider('llamastack');
-      const newProvider = createMockProvider('googleadk');
+      const newProvider = createMockProvider('mock-provider');
       (newProvider.initialize as jest.Mock).mockReturnValue(initPromise);
       const factory = jest.fn().mockReturnValue(newProvider);
       const manager = new ProviderManager(oldProvider, factory, logger);
 
-      const swapPromise = manager.switchProvider('googleadk');
+      const swapPromise = manager.switchProvider('mock-provider');
       expect(manager.isSwapping).toBe(true);
       resolveInit!();
       await swapPromise;
@@ -102,13 +102,13 @@ describe('ProviderManager', () => {
         resolveInit = r;
       });
       const oldProvider = createMockProvider('llamastack');
-      const newProvider = createMockProvider('googleadk');
+      const newProvider = createMockProvider('mock-provider');
       (newProvider.initialize as jest.Mock).mockReturnValue(initPromise);
       const factory = jest.fn().mockReturnValue(newProvider);
       const manager = new ProviderManager(oldProvider, factory, logger);
 
-      const swapPromise = manager.switchProvider('googleadk');
-      await expect(manager.switchProvider('googleadk')).rejects.toThrow(
+      const swapPromise = manager.switchProvider('mock-provider');
+      await expect(manager.switchProvider('mock-provider')).rejects.toThrow(
         'already in progress',
       );
       resolveInit!();
@@ -117,14 +117,14 @@ describe('ProviderManager', () => {
 
     it('if new provider init fails, old provider remains active', async () => {
       const oldProvider = createMockProvider('llamastack');
-      const newProvider = createMockProvider('googleadk');
+      const newProvider = createMockProvider('mock-provider');
       (newProvider.initialize as jest.Mock).mockRejectedValue(
         new Error('init failed'),
       );
       const factory = jest.fn().mockReturnValue(newProvider);
       const manager = new ProviderManager(oldProvider, factory, logger);
 
-      await expect(manager.switchProvider('googleadk')).rejects.toThrow(
+      await expect(manager.switchProvider('mock-provider')).rejects.toThrow(
         'init failed',
       );
       expect(manager.provider).toBe(oldProvider);
@@ -136,11 +136,11 @@ describe('ProviderManager', () => {
       (oldProvider.shutdown as jest.Mock).mockRejectedValue(
         new Error('shutdown failed'),
       );
-      const newProvider = createMockProvider('googleadk');
+      const newProvider = createMockProvider('mock-provider');
       const factory = jest.fn().mockReturnValue(newProvider);
       const manager = new ProviderManager(oldProvider, factory, logger);
 
-      await manager.switchProvider('googleadk');
+      await manager.switchProvider('mock-provider');
 
       expect(manager.provider).toBe(newProvider);
       expect(logger.warn).toHaveBeenCalledWith(

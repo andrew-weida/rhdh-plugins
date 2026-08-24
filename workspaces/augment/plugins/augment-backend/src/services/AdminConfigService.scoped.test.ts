@@ -81,7 +81,7 @@ describe('AdminConfigService scoped key resolution and migration', () => {
         'llamastack',
         'user:default/admin',
       );
-      const value = await adminConfig.getScopedValue('model', 'googleadk');
+      const value = await adminConfig.getScopedValue('model', 'other-provider');
       expect(value).toBeUndefined();
     });
 

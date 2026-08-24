@@ -217,7 +217,7 @@ export type SecurityMode = 'none' | 'plugin-only' | 'full';
  * @public
  */
 export interface AugmentStatus {
-  /** Active provider identifier (e.g., 'llamastack', 'googleadk') */
+  /** Active provider identifier (e.g., 'llamastack') */
   providerId: string;
   provider: ProviderStatus;
   vectorStore: VectorStoreStatus;

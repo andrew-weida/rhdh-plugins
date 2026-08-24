@@ -104,12 +104,6 @@ export function createProvider(
         adminConfig,
       });
 
-    case 'googleadk':
-      throw new Error(
-        'Google ADK provider is not yet implemented. ' +
-          'Set augment.provider to "llamastack" in app-config.yaml.',
-      );
-
     default: {
       const externalFactory = dynamicFactories.get(providerType);
       if (externalFactory) {
@@ -118,7 +112,7 @@ export function createProvider(
       throw new Error(
         `Unknown agentic provider: "${providerType}". ` +
           `Check augment.provider in app-config.yaml. ` +
-          `Available providers: llamastack, googleadk${
+          `Available providers: llamastack${
             dynamicFactories.size > 0
               ? `, ${[...dynamicFactories.keys()].join(', ')}`
               : ''

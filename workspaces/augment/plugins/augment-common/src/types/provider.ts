@@ -22,12 +22,12 @@
  * Built-in AI provider identifiers shipped with the plugin.
  * @public
  */
-export type BuiltInProviderType = 'llamastack' | 'googleadk';
+export type BuiltInProviderType = 'llamastack';
 
 /**
  * All accepted provider identifiers.
  *
- * Built-in types (`llamastack`, `googleadk`) are autocompleted,
+ * Built-in types (`llamastack`) are autocompleted,
  * but arbitrary string IDs from extension-registered providers
  * are also accepted via the `(string & {})` widening pattern.
  *

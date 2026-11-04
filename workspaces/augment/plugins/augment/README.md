@@ -96,111 +96,66 @@ This section describes how to build, package, and deploy Augment as a dynamic pl
 ### Prerequisites
 
 - Node.js 22+ and Yarn installed
-- Podman or Docker installed
+- Podman (or Docker) installed
 - Access to a container registry (e.g., Quay.io, Docker Hub)
-- `@red-hat-developer-hub/cli` package (installed via npx)
 
-### Step 1: Install Dependencies
+### Build and package with the provided script
+
+[scripts/build-dynamic-plugins.sh](../../scripts/build-dynamic-plugins.sh) wraps the official `@red-hat-developer-hub/cli` packaging flow (`plugin export` + `plugin package`) to build both plugins and package them into a **single combined OCI image**:
 
 ```bash
 cd workspaces/augment
+IMAGE_REGISTRY=quay.io/myorg ./scripts/build-dynamic-plugins.sh --push
+```
+
+This installs dependencies, runs `yarn build:all`, exports each plugin with `--embed-package @red-hat-developer-hub/backstage-plugin-augment-common` (required since `augment-common` is a workspace package and isn't published to npm), and runs `plugin package` once from the workspace root so the CLI discovers both `plugins/augment/dist-dynamic` and `plugins/augment-backend/dist-dynamic` and bundles them into one image tagged `quay.io/myorg/augment:<version>` (the version from `plugins/augment/package.json`, override with `VERSION=...`). Drop `--push` to only build locally.
+
+> The CLI auto-derives each plugin's package directory name from its npm package name (scope stripped, slashes/`@` replaced with `-`). For this workspace that's `red-hat-developer-hub-backstage-plugin-augment` and `red-hat-developer-hub-backstage-plugin-augment-backend` — use these exact names (not arbitrary aliases) in `dynamic-plugins.override.yaml` below, since they must match what's actually inside the image.
+
+### Manual steps (equivalent to the script)
+
+```bash
+# 1. Install dependencies and build
+cd workspaces/augment
 yarn install
-```
+yarn build:all
+RHDH_CLI=$(pwd)/node_modules/.bin/rhdh-cli
 
-### Step 2: Build the Plugins
-
-```bash
-# Build frontend plugin
+# 2. Export each plugin, embedding the shared workspace-only common package
 cd plugins/augment
-yarn build
+"$RHDH_CLI" plugin export \
+  --embed-package @red-hat-developer-hub/backstage-plugin-augment-common
 
-# Build backend plugin
 cd ../augment-backend
-yarn build
+"$RHDH_CLI" plugin export \
+  --embed-package @red-hat-developer-hub/backstage-plugin-augment-common
+
+# 3. Package BOTH plugins into one image — run from the workspace root
+#    (not from inside a plugin dir) so the CLI discovers every
+#    plugins/*/dist-dynamic folder and bundles them together
+cd ../..
+"$RHDH_CLI" plugin package \
+  -t quay.io/myorg/augment:v0.1.0
+
+# 4. Push
+podman push quay.io/myorg/augment:v0.1.0
 ```
 
-### Step 3: Export as Dynamic Plugins
+### Configure in RHDH
 
-```bash
-# Export frontend plugin
-cd plugins/augment
-npx @red-hat-developer-hub/cli@latest plugin export
-
-# Export backend plugin
-cd ../augment-backend
-npx @red-hat-developer-hub/cli@latest plugin export
-```
-
-This creates `dist-dynamic/` directories in each plugin folder containing the dynamic plugin packages.
-
-### Step 4: Package into OCI Image
-
-```bash
-# Create a temporary directory for packaging
-rm -rf /tmp/augment-dynamic-plugins
-mkdir -p /tmp/augment-dynamic-plugins
-
-# Copy exported plugins
-cp -r plugins/augment/dist-dynamic /tmp/augment-dynamic-plugins/rhdh-plugin-augment
-cp -r plugins/augment-backend/dist-dynamic /tmp/augment-dynamic-plugins/rhdh-plugin-augment-backend
-
-# Create metadata file
-cat > /tmp/augment-dynamic-plugins/index.json << 'EOF'
-[
-  {
-    "rhdh-plugin-augment": {
-      "name": "@red-hat-developer-hub/backstage-plugin-augment-dynamic",
-      "version": "0.1.0",
-      "description": "Frontend plugin for Augment",
-      "backstage": { "role": "frontend-plugin", "pluginId": "augment", "supported-versions": "1.42.0" },
-      "license": "Apache-2.0"
-    }
-  },
-  {
-    "rhdh-plugin-augment-backend": {
-      "name": "@red-hat-developer-hub/backstage-plugin-augment-backend-dynamic",
-      "version": "0.1.0",
-      "description": "Backend plugin for Augment",
-      "backstage": { "role": "backend-plugin", "pluginId": "augment", "supported-versions": "1.42.0" },
-      "license": "Apache-2.0"
-    }
-  }
-]
-EOF
-
-# Build OCI image
-cd /tmp/augment-dynamic-plugins
-echo "FROM scratch
-COPY . ." | podman build --platform linux/amd64 -t <your-registry>/<your-repo>:<tag> -f - .
-```
-
-Replace `<your-registry>/<your-repo>:<tag>` with your actual registry path, e.g., `quay.io/myorg/augment:v0.1.0`.
-
-### Step 5: Push to Registry
-
-```bash
-# Login to your registry
-podman login <your-registry> -u <username> -p <password>
-
-# Push the image
-podman push <your-registry>/<your-repo>:<tag>
-```
-
-### Step 6: Configure in RHDH
-
-Add the following to your `dynamic-plugins.override.yaml`:
+Add the following to your `dynamic-plugins.override.yaml`, using the auto-generated package names from the image:
 
 ```yaml
 plugins:
   # Frontend plugin
-  - package: oci://<your-registry>/<your-repo>:<tag>!rhdh-plugin-augment
+  - package: oci://quay.io/myorg/augment:v0.1.0!red-hat-developer-hub-backstage-plugin-augment
     disabled: false
     pluginConfig:
       dynamicPlugins:
         frontend:
-          rhdh-plugin-augment:
+          red-hat-developer-hub-backstage-plugin-augment:
             dynamicRoutes:
-              - path: '/augment
+              - path: '/augment'
                 importName: AugmentPage
             menuItems:
               augment:
@@ -208,11 +163,11 @@ plugins:
                 icon: chat
 
   # Backend plugin
-  - package: oci://<your-registry>/<your-repo>:<tag>!rhdh-plugin-augment-backend
+  - package: oci://quay.io/myorg/augment:v0.1.0!red-hat-developer-hub-backstage-plugin-augment-backend
     disabled: false
 ```
 
-### Step 7: Apply Changes in RHDH
+### Apply Changes in RHDH
 
 ```bash
 # Reinstall plugins
